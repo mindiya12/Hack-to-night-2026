@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Sidebar from '../../components/sidebar'
 import {
-  Search,
-  Settings,
   CheckCircle2,
   AlertTriangle,
   ChevronLeft
 } from '../../components/Icons'
+import { ScamShieldModal } from '@/components/ScamShieldModal'
+import RouteGuard from '@/components/RouteGuard'
 
 type Biller = {
   id: string
@@ -32,26 +32,44 @@ const billers: Biller[] = [
   { id: 'hsbc', name: 'HSBC', logo: '/billers/hsbc.png' }
 ]
 
-type Screen = 'select' | 'form' | 'success' | 'failed'
-
-const MOCK_BALANCE = 5000
+type Screen = 'select' | 'form' | 'confirm' | 'success' | 'failed'
 
 type FormErrors = {
+  fromAccount?: string
   accountNumber?: string
   billId?: string
   dueAmount?: string
 }
 
 export default function PayBillsPage() {
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [fromAccount, setFromAccount] = useState('')
   const [screen, setScreen] = useState<Screen>('select')
   const [selectedBiller, setSelectedBiller] = useState<Biller | null>(null)
   const [accountNumber, setAccountNumber] = useState('')
   const [billId, setBillId] = useState('')
   const [dueAmount, setDueAmount] = useState('')
   const [remarks, setRemarks] = useState('')
+  const [pin, setPin] = useState('')
   const [confirmationNumber, setConfirmationNumber] = useState('')
   const [failReason, setFailReason] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
+
+  const [riskResult, setRiskResult] = useState<any>(null)
+  const [showScamModal, setShowScamModal] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/accounts')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok && data.accounts) {
+          setAccounts(data.accounts)
+          if (data.accounts.length > 0)
+            setFromAccount(data.accounts[0].account_number)
+        }
+      })
+  }, [])
 
   function handleSelectBiller(biller: Biller) {
     setSelectedBiller(biller)
@@ -62,49 +80,89 @@ export default function PayBillsPage() {
   function validateForm(): boolean {
     const newErrors: FormErrors = {}
 
-    if (!accountNumber.trim()) {
+    if (!fromAccount) newErrors.fromAccount = 'Select a source account'
+    if (!accountNumber.trim())
       newErrors.accountNumber = 'Account number is required'
-    } else if (!/^[0-9]{6,16}$/.test(accountNumber.trim())) {
-      newErrors.accountNumber = 'Enter a valid account number (6–16 digits)'
-    }
-
-    if (!billId.trim()) {
-      newErrors.billId = 'Bill ID is required'
-    } else if (billId.trim().length < 3) {
-      newErrors.billId = 'Bill ID looks too short'
-    }
-
-    if (!dueAmount.trim()) {
-      newErrors.dueAmount = 'Due amount is required'
-    } else {
-      const amount = Number(dueAmount)
-      if (Number.isNaN(amount) || amount <= 0) {
-        newErrors.dueAmount = 'Enter a valid amount greater than 0'
-      }
+    if (!billId.trim()) newErrors.billId = 'Bill ID is required'
+    if (
+      !dueAmount.trim() ||
+      isNaN(Number(dueAmount)) ||
+      Number(dueAmount) <= 0
+    ) {
+      newErrors.dueAmount = 'Enter a valid amount greater than 0'
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  function handlePayNow() {
-    if (!validateForm()) {
-      return
+  async function handleNextStep() {
+    if (!validateForm()) return
+    setIsProcessing(true)
+
+    // Risk Check for Billers too!
+    try {
+      // In a real system, biller accounts are pre-verified. We use Admin Vault as mock biller destination.
+      const toAccount = '9999999999'
+
+      const res = await fetch('/api/risk-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromAccount,
+          toAccount,
+          amount: dueAmount
+        })
+      })
+      const risk = await res.json()
+
+      if (risk.ok && risk.level !== 'LOW') {
+        setRiskResult(risk)
+        setShowScamModal(true)
+      } else {
+        setScreen('confirm')
+      }
+    } catch {
+      setScreen('confirm')
+    } finally {
+      setIsProcessing(false)
     }
+  }
 
-    const amount = Number(dueAmount)
-
-    if (amount > MOCK_BALANCE) {
-      setFailReason(
-        `Insufficient Balance\nCurrent Balance is: Rs.${MOCK_BALANCE}`
-      )
+  async function handlePayNow() {
+    if (!pin) {
+      setFailReason('PIN is required')
       setScreen('failed')
       return
     }
 
-    const confNum = Math.floor(10000000 + Math.random() * 90000000).toString()
-    setConfirmationNumber(confNum)
-    setScreen('success')
+    setIsProcessing(true)
+    try {
+      const res = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromAccount,
+          toAccount: '9999999999', // Mock Biller Destination
+          amount: dueAmount,
+          description: `BILL PAY: ${selectedBiller?.name} - ${billId} ${remarks}`,
+          pin
+        })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setConfirmationNumber(data.transaction.id.toString())
+        setScreen('success')
+      } else {
+        setFailReason(data.message || 'Payment failed')
+        setScreen('failed')
+      }
+    } catch {
+      setFailReason('Network error')
+      setScreen('failed')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   function resetToHome() {
@@ -114,172 +172,258 @@ export default function PayBillsPage() {
     setBillId('')
     setDueAmount('')
     setRemarks('')
+    setPin('')
     setErrors({})
   }
 
   return (
-    <div className="page">
-      <Sidebar />
+    <RouteGuard>
+      <div className="page">
+        <Sidebar />
 
-      <div className="content">
-        <header className="topbar">
-          <h1>Pay Bills</h1>
-          <div className="topbar-icons">
-            <Search size={20} />
-            <Settings size={20} />
-            <div className="avatar">
-              <Image
-                src="/avatar.png"
-                alt="Profile"
-                width={36}
-                height={36}
-                style={{ objectFit: 'cover', borderRadius: '50%' }}
-              />
-            </div>
-          </div>
-        </header>
-
-        <main className="main">
-          <div className="card-wrapper">
-            {screen === 'select' && (
-              <div className="card">
-                <div className="biller-grid">
-                  {billers.map((biller) => (
-                    <button
-                      key={biller.id}
-                      onClick={() => handleSelectBiller(biller)}
-                      className="biller-btn"
-                    >
-                      <div className="biller-icon logo-circle">
-                        <Image
-                          src={biller.logo}
-                          alt={biller.name}
-                          width={44}
-                          height={44}
-                          style={{ objectFit: 'contain' }}
-                        />
-                      </div>
-                      <span className="biller-name">{biller.name}</span>
-                    </button>
-                  ))}
-                </div>
+        <div className="content">
+          <header className="topbar">
+            <h1>Pay Bills</h1>
+            <div className="topbar-icons">
+              <div className="avatar">
+                <Image
+                  src="/avatar.png"
+                  alt="Profile"
+                  width={36}
+                  height={36}
+                  style={{ objectFit: 'cover', borderRadius: '50%' }}
+                />
               </div>
-            )}
+            </div>
+          </header>
 
-            {screen === 'form' && selectedBiller && (
-              <div className="card">
-                <button
-                  className="back-btn"
-                  onClick={() => setScreen('select')}
-                >
-                  <ChevronLeft size={16} />
-                  Back to billers
-                </button>
+          <main className="main">
+            <div className="card-wrapper">
+              {screen === 'select' && (
+                <div className="card">
+                  <div className="biller-grid">
+                    {billers.map((biller) => (
+                      <button
+                        key={biller.id}
+                        onClick={() => handleSelectBiller(biller)}
+                        className="biller-btn"
+                      >
+                        <div className="biller-icon logo-circle">
+                          <Image
+                            src={biller.logo}
+                            alt={biller.name}
+                            width={44}
+                            height={44}
+                            style={{ objectFit: 'contain' }}
+                          />
+                        </div>
+                        <span className="biller-name">{biller.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                <div className="biller-header">
-                  <div className="biller-icon small logo-circle">
-                    <Image
-                      src={selectedBiller.logo}
-                      alt={selectedBiller.name}
-                      width={28}
-                      height={28}
-                      style={{ objectFit: 'contain' }}
+              {screen === 'form' && selectedBiller && (
+                <div className="card">
+                  <button
+                    className="back-btn"
+                    onClick={() => setScreen('select')}
+                  >
+                    <ChevronLeft size={16} /> Back to billers
+                  </button>
+
+                  <div className="biller-header">
+                    <div className="biller-icon small logo-circle">
+                      <Image
+                        src={selectedBiller.logo}
+                        alt={selectedBiller.name}
+                        width={28}
+                        height={28}
+                        style={{ objectFit: 'contain' }}
+                      />
+                    </div>
+                    <span className="biller-header-name">
+                      {selectedBiller.name}
+                    </span>
+                  </div>
+
+                  <div className="field">
+                    <label>Pay From Account</label>
+                    <select
+                      value={fromAccount}
+                      onChange={(e) => setFromAccount(e.target.value)}
+                      className={
+                        errors.fromAccount ? 'input-error bg-white' : 'bg-white'
+                      }
+                      style={{
+                        padding: '0.85rem 1.1rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid transparent'
+                      }}
+                    >
+                      {accounts.map((a) => (
+                        <option key={a.account_number} value={a.account_number}>
+                          {a.account_name} - {a.account_number} (Rs.{' '}
+                          {Number(a.balance).toLocaleString()})
+                        </option>
+                      ))}
+                    </select>
+                    {errors.fromAccount && (
+                      <span className="error-text">{errors.fromAccount}</span>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <label>Account number</label>
+                    <input
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="Enter account number"
+                      className={errors.accountNumber ? 'input-error' : ''}
+                    />
+                    {errors.accountNumber && (
+                      <span className="error-text">{errors.accountNumber}</span>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <label>Bill ID</label>
+                    <input
+                      value={billId}
+                      onChange={(e) => setBillId(e.target.value)}
+                      placeholder="Enter bill ID"
+                      className={errors.billId ? 'input-error' : ''}
+                    />
+                    {errors.billId && (
+                      <span className="error-text">{errors.billId}</span>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <label>Amount (Rs.)</label>
+                    <input
+                      type="number"
+                      value={dueAmount}
+                      onChange={(e) => setDueAmount(e.target.value)}
+                      placeholder="0.00"
+                      className={errors.dueAmount ? 'input-error' : ''}
+                    />
+                    {errors.dueAmount && (
+                      <span className="error-text">{errors.dueAmount}</span>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <label>Remarks</label>
+                    <input
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="Optional"
                     />
                   </div>
-                  <span className="biller-header-name">
-                    {selectedBiller.name}
-                  </span>
+
+                  <button
+                    className="pay-now-btn"
+                    disabled={isProcessing}
+                    onClick={handleNextStep}
+                  >
+                    {isProcessing ? 'CHECKING...' : 'CONTINUE'}
+                  </button>
                 </div>
+              )}
 
-                <div className="field">
-                  <label>Account number</label>
-                  <input
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="Enter account number"
-                    className={errors.accountNumber ? 'input-error' : ''}
-                  />
-                  {errors.accountNumber && (
-                    <span className="error-text">{errors.accountNumber}</span>
-                  )}
+              {screen === 'confirm' && (
+                <div className="card status-card">
+                  <h2>Confirm Payment</h2>
+                  <p className="status-sub mb-4">
+                    Pay{' '}
+                    <strong>Rs. {Number(dueAmount).toLocaleString()}</strong> to{' '}
+                    <strong>{selectedBiller?.name}</strong>
+                  </p>
+
+                  <div className="mb-6 w-full text-left">
+                    <label className="block text-gray-700 mb-2 font-semibold">
+                      Enter 4-digit PIN to confirm:
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      className="w-full text-center text-2xl tracking-[1em] h-14 bg-gray-100 rounded-xl border border-gray-300 outline-none focus:border-purple-500"
+                      placeholder="****"
+                    />
+                  </div>
+
+                  <button
+                    className="pay-now-btn"
+                    disabled={isProcessing}
+                    onClick={handlePayNow}
+                  >
+                    {isProcessing ? 'PROCESSING...' : 'CONFIRM & PAY NOW'}
+                  </button>
+                  <button
+                    className="back-home-btn !bg-transparent !text-gray-500 mt-4"
+                    onClick={() => setScreen('form')}
+                  >
+                    Cancel
+                  </button>
                 </div>
+              )}
 
-                <div className="field">
-                  <label>Bill ID</label>
-                  <input
-                    value={billId}
-                    onChange={(e) => setBillId(e.target.value)}
-                    placeholder="Enter bill ID"
-                    className={errors.billId ? 'input-error' : ''}
-                  />
-                  {errors.billId && (
-                    <span className="error-text">{errors.billId}</span>
-                  )}
+              {screen === 'success' && (
+                <div className="card status-card">
+                  <div className="status-circle success">
+                    <CheckCircle2 size={64} />
+                  </div>
+                  <h2>Payment Successful!</h2>
+                  <p className="status-sub">
+                    Confirmation number : {confirmationNumber}
+                  </p>
+                  <button className="back-home-btn" onClick={resetToHome}>
+                    <ChevronLeft size={16} /> BACK TO HOME
+                  </button>
                 </div>
+              )}
 
-                <div className="field">
-                  <label>Due Amount</label>
-                  <input
-                    type="number"
-                    value={dueAmount}
-                    onChange={(e) => setDueAmount(e.target.value)}
-                    placeholder="0.00"
-                    className={errors.dueAmount ? 'input-error' : ''}
-                  />
-                  {errors.dueAmount && (
-                    <span className="error-text">{errors.dueAmount}</span>
-                  )}
+              {screen === 'failed' && (
+                <div className="card status-card">
+                  <div className="status-circle failed">
+                    <AlertTriangle size={64} />
+                  </div>
+                  <h2>Payment Failed!</h2>
+                  <p className="status-sub">{failReason}</p>
+                  <button className="back-home-btn" onClick={resetToHome}>
+                    <ChevronLeft size={16} /> BACK TO HOME
+                  </button>
                 </div>
+              )}
 
-                <div className="field">
-                  <label>Remarks</label>
-                  <input
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
+              {showScamModal && riskResult && (
+                <ScamShieldModal
+                  riskResult={riskResult}
+                  transactionCtx={{
+                    amount: dueAmount,
+                    toAccount: '9999999999',
+                    reasons: riskResult.reasons,
+                    firstTime: riskResult.firstTime
+                  }}
+                  onProceed={() => {
+                    setShowScamModal(false)
+                    setScreen('confirm')
+                  }}
+                  onCancel={() => {
+                    setShowScamModal(false)
+                    setScreen('form')
+                  }}
+                />
+              )}
+            </div>
+          </main>
+        </div>
 
-                <button className="pay-now-btn" onClick={handlePayNow}>
-                  PAY NOW
-                </button>
-              </div>
-            )}
-
-            {screen === 'success' && (
-              <div className="card status-card">
-                <div className="status-circle success">
-                  <CheckCircle2 size={64} />
-                </div>
-                <h2>Payment Successful!</h2>
-                <p className="status-sub">
-                  Confirmation number : {confirmationNumber}
-                </p>
-                <button className="back-home-btn" onClick={resetToHome}>
-                  <ChevronLeft size={16} />
-                  BACK TO HOME
-                </button>
-              </div>
-            )}
-
-            {screen === 'failed' && (
-              <div className="card status-card">
-                <div className="status-circle failed">
-                  <AlertTriangle size={64} />
-                </div>
-                <h2>Payment Failed!</h2>
-                <p className="status-sub">{failReason}</p>
-                <button className="back-home-btn" onClick={resetToHome}>
-                  <ChevronLeft size={16} />
-                  BACK TO HOME
-                </button>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      <style jsx>{`
+        <style jsx>{`
         .page {
           display: flex;
           min-height: 100vh;
@@ -505,6 +649,7 @@ export default function PayBillsPage() {
           background: #450043;
         }
       `}</style>
-    </div>
+      </div>
+    </RouteGuard>
   )
 }

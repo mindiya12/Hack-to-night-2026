@@ -1,47 +1,99 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="text-center max-w-2xl">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">Smart Spend</h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Manage your finances effortlessly
+    <main className="min-h-screen bg-bg-light font-geist text-black">
+      {/* Header */}
+      <header className="flex justify-between items-center py-6 px-12 bg-white shadow-sm border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/loginlogo.png"
+            alt="Nova Bank Logo"
+            width={48}
+            height={48}
+            className="rounded-full"
+          />
+          <h1 className="text-2xl font-bold tracking-tight text-[#1d0730]">
+            Nova Bank
+          </h1>
+        </div>
+        <div className="flex gap-4">
+          <Link
+            href="/login"
+            className="px-6 py-2.5 rounded-full font-bold text-[#1d0730] hover:bg-gray-100 transition"
+          >
+            Login
+          </Link>
+          <Link
+            href="/sign-up"
+            className="px-6 py-2.5 rounded-full font-bold bg-[#1d0730] text-white hover:bg-[#2d0b4a] transition"
+          >
+            Sign Up
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="flex flex-col items-center text-center pt-24 pb-32 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-200 rounded-full blur-[120px] opacity-30 -z-10" />
+
+        <h2 className="text-6xl md:text-7xl font-extrabold tracking-tight mb-8 max-w-4xl leading-tight">
+          The Future of Banking is{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9a5c97] to-indigo-600">
+            Smart & Secure
+          </span>
+        </h2>
+        <p className="text-xl text-gray-600 mb-12 max-w-2xl leading-relaxed">
+          Experience seamless transfers, intelligent spend analytics, and our
+          advanced Scam Shield technology designed to keep your money safe.
         </p>
 
-        <nav className="flex flex-wrap justify-center gap-4">
+        <div className="flex gap-6">
           <Link
-            href="/accounts"
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            href="/sign-up"
+            className="px-8 py-4 rounded-full font-bold text-lg bg-[#9a5c97] text-white hover:bg-[#7a4676] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1"
           >
-            Accounts
+            Open an Account Today
           </Link>
-          <Link
-            href="/bank-transfer"
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-          >
-            Bank Transfer
-          </Link>
-          <Link
-            href="/pay-bills"
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            Pay Bills
-          </Link>
-          <Link
-            href="/e-statement"
-            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
-          >
-            E-Statement
-          </Link>
-          <Link
-            href="/smart-spend"
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            Smart Spend
-          </Link>
-        </nav>
-      </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+            <div className="text-4xl mb-6">🛡️</div>
+            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+              Scam Shield
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              Our AI-powered guardian analyzes every transfer in real-time to
+              protect you from advanced social engineering and fraud.
+            </p>
+          </div>
+          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+            <div className="text-4xl mb-6">📊</div>
+            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+              Smart Spend
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              Track your expenses effortlessly with beautiful dashboards,
+              automated categorization, and intelligent AI insights.
+            </p>
+          </div>
+          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+            <div className="text-4xl mb-6">⚡</div>
+            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+              Instant Payments
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              Pay your utility bills and transfer funds instantly to any bank
+              with bank-grade security and zero friction.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }

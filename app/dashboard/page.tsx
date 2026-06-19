@@ -1,27 +1,57 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '../../components/sidebar'
 import { Bell, ChevronRight, Search } from '../../components/Icons'
-
-const transactions = [
-  {
-    date: 'Oct, 16 2025',
-    account: '......3423',
-    amount: '-Rs. 4500.00'
-  },
-  {
-    date: 'Oct, 16 2025',
-    account: '......4876',
-    amount: '-Rs. 10,000.00'
-  },
-  {
-    date: 'Oct, 16 2025',
-    account: '......6754',
-    amount: '-Rs. 9870.00'
-  }
-]
+import { getSession, SessionUser } from '@/lib/auth'
 
 export default function Dashboard() {
+  const router = useRouter()
+  const [user, setUser] = useState<SessionUser | null>(null)
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const session = getSession()
+    if (!session) {
+      router.replace('/login')
+      return
+    }
+    setUser(session)
+
+    Promise.all([
+      fetch('/api/accounts').then((r) => r.json()),
+      fetch('/api/transactions?limit=5').then((r) => r.json()) // fetches for first account by default if not passed, wait! Let's just fetch recent overall or per account.
+    ])
+      .then(([accRes, txRes]) => {
+        if (accRes.ok) {
+          setAccounts(accRes.accounts)
+          // If they have an account, fetch txns for it
+          if (accRes.accounts.length > 0) {
+            fetch(
+              `/api/transactions?account=${accRes.accounts[0].account_number}&limit=5`
+            )
+              .then((r) => r.json())
+              .then((t) => {
+                if (t.ok) setTransactions(t.transactions)
+                setLoading(false)
+              })
+          } else {
+            setLoading(false)
+          }
+        } else {
+          setLoading(false)
+        }
+      })
+      .catch(() => setLoading(false))
+  }, [router])
+
+  if (!user) return null
+
+  const mainAccount = accounts[0]
+
   return (
     <main className="dashboard">
       <Sidebar />
@@ -37,66 +67,121 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Top Section */}
-        <div className="top-section">
-          <div className="welcome-card">
-            <h2 className="welcome-title">Welcome back, Dilara!</h2>
-            <div className="balance-card">
-              <p className="balance-label">Current Balance</p>
-              <p className="balance-amount">Rs. 100, 000</p>
-              <ChevronRight className="balance-chevron" size={30} />
-            </div>
-            <div className="carousel-dots">
-              <span className="dot active" />
-              <span className="dot" />
-              <span className="dot" />
-            </div>
-            <img
-              src="/dashboard-logo.png"
-              alt="woman"
-              className="welcome-image"
-            />
-          </div>
-
-          <div className="payees-card">
-            <h3 className="payees-title">Saved Payees</h3>
-            <div className="payees-list">
-              {[1, 2].map((item) => (
-                <div key={item} className="payee-item">
-                  <img src="/person-logo.png" alt="user" className="avatar" />
-                  <div className="payee-info">
-                    <p>HKDS</p>
-                    <p>Wickramanayake</p>
-                  </div>
+        {loading ? (
+          <div className="mt-8">Loading dashboard data...</div>
+        ) : (
+          <>
+            {/* Top Section */}
+            <div className="top-section">
+              <div className="welcome-card">
+                <h2 className="welcome-title">
+                  Welcome back, {user.full_name.split(' ')[0]}!
+                </h2>
+                <div className="balance-card">
+                  <p className="balance-label">Current Balance</p>
+                  <p className="balance-amount">
+                    Rs.{' '}
+                    {mainAccount
+                      ? Number(mainAccount.balance).toLocaleString()
+                      : '0'}
+                  </p>
+                  <ChevronRight className="balance-chevron" size={30} />
                 </div>
-              ))}
-            </div>
-            <div className="view-all">
-              View all
-              <ChevronRight size={15} />
-            </div>
-          </div>
-        </div>
-
-        {/* Transactions */}
-        <div className="transactions-section">
-          <h2 className="transactions-title">Recent Transactions</h2>
-          <div className="transactions-card">
-            {transactions.map((t, index) => (
-              <div key={index} className="transaction-item">
-                <img src="/person-logo.png" alt="user" className="avatar" />
-                <span className="transaction-date">{t.date}</span>
-                <span className="transaction-account">{t.account}</span>
-                <span className="transaction-amount">{t.amount}</span>
-                <span className="transaction-status">Success</span>
+                <div className="carousel-dots">
+                  {accounts.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`dot ${i === 0 ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+                <img
+                  src="/dashboard-logo.png"
+                  alt="woman"
+                  className="welcome-image"
+                />
               </div>
-            ))}
-            <div className="view-all">
-              View all
-              <ChevronRight size={15} />
+
+              <div className="payees-card">
+                <h3 className="payees-title">Saved Payees</h3>
+                <div className="payees-list">
+                  {/* Just some dummy payees for UI demo since we don't have a payee table */}
+                  {[1, 2].map((item) => (
+                    <div key={item} className="payee-item">
+                      <img
+                        src="/person-logo.png"
+                        alt="user"
+                        className="avatar"
+                      />
+                      <div className="payee-info">
+                        <p>HKDS</p>
+                        <p>Wickramanayake</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="view-all">
+                  View all
+                  <ChevronRight size={15} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+
+            {/* Transactions */}
+            <div className="transactions-section">
+              <h2 className="transactions-title">Recent Transactions</h2>
+              <div className="transactions-card">
+                {transactions.length === 0 ? (
+                  <div className="text-gray-500">No recent transactions.</div>
+                ) : (
+                  transactions.map((t, index) => {
+                    const isDebit =
+                      t.from_account === mainAccount?.account_number
+                    const amountPrefix = isDebit ? '-' : '+'
+                    const amountColor = isDebit
+                      ? 'text-red-600'
+                      : 'text-green-600'
+                    const dateStr = new Date(t.created_at).toLocaleDateString(
+                      'en-US',
+                      { month: 'short', day: 'numeric', year: 'numeric' }
+                    )
+
+                    return (
+                      <div key={index} className="transaction-item">
+                        <img
+                          src="/person-logo.png"
+                          alt="user"
+                          className="avatar"
+                        />
+                        <span className="transaction-date">{dateStr}</span>
+                        <span className="transaction-account">
+                          {isDebit ? t.to_account : t.from_account}
+                        </span>
+                        <span
+                          className={`transaction-amount font-medium ${amountColor}`}
+                        >
+                          {amountPrefix}Rs. {Number(t.amount).toLocaleString()}
+                        </span>
+                        <span className="transaction-status">
+                          {t.status || 'Success'}
+                        </span>
+                      </div>
+                    )
+                  })
+                )}
+                {transactions.length > 0 && (
+                  <div
+                    className="view-all cursor-pointer"
+                    onClick={() => router.push('/e-statement')}
+                  >
+                    View all
+                    <ChevronRight size={15} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       <style jsx>{`
@@ -278,7 +363,7 @@ export default function Dashboard() {
           justify-content: flex-end;
           align-items: center;
           gap: 0.25rem;
-          cursor: default;
+          cursor: pointer;
         }
 
         .transactions-section {

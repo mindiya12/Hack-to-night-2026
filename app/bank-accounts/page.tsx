@@ -1,508 +1,414 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/sidebar'
-import { Search, Bell } from '@/components/Icons'
+import RouteGuard from '@/components/RouteGuard'
 import styles from './accounts.module.css'
 
-type Screen = 'list' | 'add' | 'edit'
+const typeLabel: Record<string, string> = {
+  savings: 'Savings Account',
+  current: 'Current Account',
+  fixed_deposit: 'Fixed Deposit'
+}
+
+const statusColors: Record<string, { bg: string; color: string }> = {
+  pending: { bg: '#fef3c7', color: '#d97706' },
+  approved: { bg: '#dcfce7', color: '#16a34a' },
+  rejected: { bg: '#fee2e2', color: '#dc2626' }
+}
 
 export default function AccountsPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
+  const [showRequest, setShowRequest] = useState(false)
+  const [requestedType, setRequestedType] = useState('savings')
+  const [submitting, setSubmitting] = useState(false)
+  const [statusMsg, setStatusMsg] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
 
-  // Screen state
-  const [screen, setScreen] = useState<Screen>('list')
-
-  // Check if we're in edit mode from URL
-  const isEditMode = searchParams.get('mode') === 'edit'
-  const accountNumberParam = searchParams.get('accountNumber') || ''
-  const nicknameParam = searchParams.get('nickname') || ''
-  const accountNameParam = searchParams.get('accountName') || ''
-  const emailParam = searchParams.get('email') || ''
-
-  // Form data state
-  const [formData, setFormData] = useState({
-    accountNumber: '',
-    accountName: '',
-    email: '',
-    nickname: ''
-  })
-
-  // Edit nickname state
-  const [nickname, setNickname] = useState('')
-
-  // Validation errors state
-  const [errors, setErrors] = useState({
-    accountNumber: '',
-    accountName: '',
-    email: '',
-    nickname: ''
-  })
-
-  // Load data if in edit mode
-  useEffect(() => {
-    if (isEditMode) {
-      setFormData({
-        accountNumber: accountNumberParam,
-        accountName: accountNameParam,
-        email: emailParam,
-        nickname: nicknameParam
+  const load = () => {
+    fetch('/api/accounts')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setAccounts(d.accounts || [])
       })
-      setNickname(nicknameParam || accountNameParam)
-      setScreen('edit')
-    }
-  }, [
-    isEditMode,
-    accountNumberParam,
-    accountNameParam,
-    emailParam,
-    nicknameParam
-  ])
-
-  // ===== VALIDATION FUNCTIONS =====
-  const validateField = (name: string, value: string) => {
-    let error = ''
-
-    switch (name) {
-      case 'accountNumber':
-        if (!value.trim()) {
-          error = 'Account number is required'
-        } else if (!/^\d+$/.test(value)) {
-          error = 'Account number must contain only numbers'
-        } else if (value.length < 8 || value.length > 20) {
-          error = 'Account number must be between 8 and 20 digits'
-        }
-        break
-
-      case 'accountName':
-        if (!value.trim()) {
-          error = 'Account name is required'
-        } else if (value.trim().length < 2) {
-          error = 'Account name must be at least 2 characters'
-        } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-          error = 'Account name must contain only letters and spaces'
-        }
-        break
-
-      case 'email':
-        if (!value.trim()) {
-          error = 'Email is required'
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'Please enter a valid email address'
-        }
-        break
-
-      case 'nickname':
-        if (!value.trim()) {
-          error = 'Nickname is required'
-        } else if (value.trim().length < 2) {
-          error = 'Nickname must be at least 2 characters'
-        }
-        break
-
-      default:
-        break
-    }
-
-    return error
+    fetch('/api/account-applications')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setApplications(d.applications || [])
+      })
   }
 
-  const validateForm = () => {
-    const newErrors = {
-      accountNumber: validateField('accountNumber', formData.accountNumber),
-      accountName: validateField('accountName', formData.accountName),
-      email: validateField('email', formData.email),
-      nickname: validateField('nickname', formData.nickname)
-    }
+  useEffect(() => {
+    load()
+  }, [])
 
-    setErrors(newErrors)
-
-    // Return true if no errors
-    return !Object.values(newErrors).some((error) => error !== '')
-  }
-
-  // ===== RESET FORM FUNCTION =====
-  const resetForm = () => {
-    setFormData({
-      accountNumber: '',
-      accountName: '',
-      email: '',
-      nickname: ''
-    })
-    setNickname('')
-    setErrors({
-      accountNumber: '',
-      accountName: '',
-      email: '',
-      nickname: ''
-    })
-  }
-
-  // ===== NAVIGATION FUNCTIONS =====
-  const goToList = () => {
-    resetForm()
-    setScreen('list')
-    router.push('/bank-accounts')
-  }
-
-  const goToAdd = () => {
-    resetForm()
-    setScreen('add')
-    router.push('/bank-accounts?mode=add')
-  }
-
-  const goToEdit = () => {
-    setScreen('edit')
-    router.push('/bank-accounts?mode=edit')
-  }
-
-  // ===== FORM HANDLERS =====
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }))
-
-    // Clear error for this field when user starts typing
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: ''
-      }))
-    }
-  }
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    const error = validateField(name, value)
-    setErrors((prev) => ({
-      ...prev,
-      [name]: error
-    }))
-  }
-
-  const handleAddAccount = (e: React.FormEvent) => {
+  const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) {
-      // Scroll to first error
-      const firstErrorField = document.querySelector(`.${styles.fieldError}`)
-      if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setSubmitting(true)
+    setStatusMsg(null)
+    try {
+      const res = await fetch('/api/account-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestedType })
+      })
+      const d = await res.json()
+      if (d.ok) {
+        setStatusMsg({
+          type: 'success',
+          text: 'Your application has been submitted. The bank will review it shortly.'
+        })
+        setShowRequest(false)
+        load()
+      } else {
+        setStatusMsg({
+          type: 'error',
+          text: d.message || 'Failed to submit application.'
+        })
       }
-      return
+    } finally {
+      setSubmitting(false)
     }
-
-    console.log('Adding new account:', formData)
-    alert('Account added successfully!')
-    resetForm()
-    goToList()
-  }
-
-  const handleUpdateAccount = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Check if at least account number is filled
-    if (!formData.accountNumber.trim()) {
-      alert('Please enter an account number first')
-      return
-    }
-
-    // Navigate to edit mode with whatever data is filled
-    router.push(
-      `/bank-accounts?mode=edit&accountNumber=${formData.accountNumber}&accountName=${formData.accountName || ''}&email=${formData.email || ''}&nickname=${formData.nickname || ''}`
-    )
-  }
-
-  const handleEditNickname = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!nickname.trim()) {
-      alert('Please enter a nickname')
-      return
-    }
-
-    if (nickname.trim().length < 2) {
-      alert('Nickname must be at least 2 characters')
-      return
-    }
-
-    console.log('Updating nickname to:', nickname)
-    alert(`Nickname updated to: ${nickname}`)
-    resetForm()
-    goToList()
-  }
-
-  const handleCancel = () => {
-    resetForm()
-    goToList()
   }
 
   return (
-    <main className={styles.accountsPage}>
-      <Sidebar />
-      <section className={styles.content}>
-        {/* ===== LIST SCREEN ===== */}
-        {screen === 'list' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Accounts</h1>
-              <div className={styles.headerActions}>
-                <Search size={22} />
-                <Bell size={22} />
-                <div className={styles.avatarPlaceholder}>
-                  <Image
-                    src="/person-logo.png"
-                    alt="Profile"
-                    width={40}
-                    height={40}
-                    style={{ objectFit: 'cover', borderRadius: '50%' }}
-                  />
-                </div>
-              </div>
-            </header>
+    <RouteGuard>
+      <main className={styles.accountsPage}>
+        <Sidebar />
+        <section className={styles.content}>
+          {/* Header */}
+          <header className={styles.contentHeader}>
+            <h1 className={styles.pageTitle}>My Accounts</h1>
+            <button
+              onClick={() => {
+                setShowRequest(!showRequest)
+                setStatusMsg(null)
+              }}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: 999,
+                border: 'none',
+                background: '#450043',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                cursor: 'pointer'
+              }}
+            >
+              {showRequest ? 'Cancel' : '+ Request New Account'}
+            </button>
+          </header>
 
-            <div className={styles.cardsContainer}>
-              <div className={styles.accountCard}>
-                <div className={styles.iconEdit} onClick={goToEdit}>
-                  ✏️
-                </div>
-                <div className={styles.iconDelete}>🗑️</div>
-                <div className={styles.accountCardContent}>
-                  <h2 className={styles.accountName}>Anura</h2>
-                  <div className={styles.accountAvatar}>
-                    <Image
-                      src="/account-logo.png"
-                      alt="profile"
-                      width={100}
-                      height={100}
-                      style={{ objectFit: 'cover', borderRadius: '50%' }}
-                    />
-                  </div>
-                  <p className={styles.accountDetails}>
-                    Nova Bank <br />
-                    Colombo 05
-                  </p>
-                </div>
-              </div>
-
-              <button className={styles.addAccountCard} onClick={goToAdd}>
-                <h2 className={styles.addAccountTitle}>Add a Bank Account</h2>
-                <div className={styles.addAccountIcon}>+</div>
+          {/* Inline status message */}
+          {statusMsg && (
+            <div
+              role="alert"
+              style={{
+                margin: '0.75rem 0',
+                padding: '0.75rem 1.25rem',
+                borderRadius: 12,
+                background:
+                  statusMsg.type === 'success' ? '#dcfce7' : '#fee2e2',
+                color: statusMsg.type === 'success' ? '#166534' : '#991b1b',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span>{statusMsg.text}</span>
+              <button
+                onClick={() => setStatusMsg(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1.1rem',
+                  lineHeight: 1
+                }}
+              >
+                ×
               </button>
             </div>
-          </>
-        )}
+          )}
 
-        {/* ===== ADD SCREEN ===== */}
-        {screen === 'add' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Accounts</h1>
-              <div className={styles.headerActions}>
-                <Search size={22} />
-                <Bell size={22} />
-                <div className={styles.avatarPlaceholder}>
-                  <Image
-                    src="/person-logo.png"
-                    alt="Profile"
-                    width={40}
-                    height={40}
-                    style={{ objectFit: 'cover', borderRadius: '50%' }}
-                  />
-                </div>
-              </div>
-            </header>
-
-            <div className={styles.formContainer}>
-              <div className={styles.formCard}>
-                <div className={styles.formHeader}>
-                  <h2 className={styles.formTitle}>Add Another Bank Account</h2>
-                </div>
-
-                <form className={styles.formFields}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="accountNumber">Bank Account Number:</label>
-                    <input
-                      type="text"
-                      id="accountNumber"
-                      name="accountNumber"
-                      value={formData.accountNumber}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Enter account number"
-                      className={errors.accountNumber ? styles.inputError : ''}
-                      required
-                    />
-                    {errors.accountNumber && (
-                      <span className={styles.fieldError}>
-                        {errors.accountNumber}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="accountName">Bank Account Name:</label>
-                    <input
-                      type="text"
-                      id="accountName"
-                      name="accountName"
-                      value={formData.accountName}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Enter account holder name"
-                      className={errors.accountName ? styles.inputError : ''}
-                      required
-                    />
-                    {errors.accountName && (
-                      <span className={styles.fieldError}>
-                        {errors.accountName}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="email">Email:</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Enter email address"
-                      className={errors.email ? styles.inputError : ''}
-                      required
-                    />
-                    {errors.email && (
-                      <span className={styles.fieldError}>{errors.email}</span>
-                    )}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="nickname">Nickname:</label>
-                    <input
-                      type="text"
-                      id="nickname"
-                      name="nickname"
-                      value={formData.nickname}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Enter a nickname"
-                      className={errors.nickname ? styles.inputError : ''}
-                      required
-                    />
-                    {errors.nickname && (
-                      <span className={styles.fieldError}>
-                        {errors.nickname}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className={styles.formActionsBottom}>
-                    <button
-                      type="button"
-                      className={styles.btnCancel}
-                      onClick={handleCancel}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.btnAdd}
-                      onClick={handleAddAccount}
-                    >
-                      Add Account
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.btnUpdate}
-                      onClick={handleUpdateAccount}
-                    >
-                      Update Account
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ===== EDIT SCREEN ===== */}
-        {screen === 'edit' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Accounts</h1>
-              <div className={styles.headerActions}>
-                <Search size={22} />
-                <Bell size={22} />
-                <div className={styles.avatarPlaceholder}>
-                  <Image
-                    src="/person-logo.png"
-                    alt="Profile"
-                    width={40}
-                    height={40}
-                    style={{ objectFit: 'cover', borderRadius: '50%' }}
-                  />
-                </div>
-              </div>
-            </header>
-
-            <div className={styles.formContainer}>
-              <div className={styles.formCard}>
-                <div className={styles.formHeader}>
-                  <h2 className={styles.formTitle}>Edit the nickname</h2>
-                </div>
-
-                <form
-                  onSubmit={handleEditNickname}
-                  className={styles.formFields}
+          {/* Request New Account Form */}
+          {showRequest && (
+            <div
+              style={{
+                background: 'white',
+                borderRadius: 20,
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                maxWidth: 480
+              }}
+            >
+              <h2
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  color: '#1d0730',
+                  marginBottom: '1rem'
+                }}
+              >
+                Request a New Account
+              </h2>
+              <p
+                style={{
+                  fontSize: '0.8rem',
+                  color: '#888',
+                  marginBottom: '1rem'
+                }}
+              >
+                Account opening is subject to bank review. You will see the
+                result in your Applications below.
+              </p>
+              <form onSubmit={handleRequest}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    color: '#555',
+                    marginBottom: '0.4rem'
+                  }}
                 >
-                  <div className={styles.formGroup}>
-                    <label htmlFor="accountNumber">Bank Account Number:</label>
-                    <input
-                      type="text"
-                      id="accountNumber"
-                      value={formData.accountNumber || '1234567890'}
-                      disabled
-                      className={styles.inputDisabled}
-                    />
-                  </div>
+                  Account Type
+                </label>
+                <select
+                  value={requestedType}
+                  onChange={(e) => setRequestedType(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.9rem',
+                    borderRadius: 10,
+                    border: '1.5px solid #e5e7eb',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    marginBottom: '1rem',
+                    background: 'white'
+                  }}
+                >
+                  <option value="savings">Savings Account</option>
+                  <option value="current">Current Account</option>
+                  <option value="fixed_deposit">Fixed Deposit</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#450043',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    opacity: submitting ? 0.7 : 1
+                  }}
+                >
+                  {submitting ? 'Submitting…' : 'Submit Application'}
+                </button>
+              </form>
+            </div>
+          )}
 
-                  <div className={styles.formGroup}>
-                    <label htmlFor="nickname">Nickname:</label>
-                    <input
-                      type="text"
-                      id="nickname"
-                      value={nickname}
-                      onChange={(e) => setNickname(e.target.value)}
-                      placeholder="Enter new nickname"
-                      required
-                    />
-                  </div>
-
-                  <div className={styles.formActionsBottom}>
-                    <button
-                      type="button"
-                      className={styles.btnCancel}
-                      onClick={handleCancel}
+          {/* Account Cards */}
+          {accounts.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '3rem 1rem',
+                color: '#aaa'
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  marginBottom: '0.5rem'
+                }}
+              >
+                No accounts yet
+              </p>
+              <p style={{ fontSize: '0.875rem' }}>
+                Request a new account above — the bank team will review and open
+                it for you.
+              </p>
+            </div>
+          ) : (
+            <div className={styles.cardsContainer}>
+              {accounts.map((acc) => (
+                <div
+                  key={acc.id}
+                  className={styles.accountCard}
+                  style={{ opacity: acc.is_frozen ? 0.75 : 1 }}
+                >
+                  <div className={styles.accountCardContent}>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        display: 'flex',
+                        gap: '0.4rem',
+                        flexWrap: 'wrap',
+                        justifyContent: 'flex-end'
+                      }}
                     >
-                      Cancel
-                    </button>
-                    <button type="submit" className={styles.btnUpdate}>
-                      UPDATE
-                    </button>
+                      <span
+                        style={{
+                          background: '#f3e8f3',
+                          color: '#450043',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: 4
+                        }}
+                      >
+                        {typeLabel[acc.account_type] || acc.account_type}
+                      </span>
+                      {acc.is_frozen && (
+                        <span
+                          style={{
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 4
+                          }}
+                        >
+                          FROZEN
+                        </span>
+                      )}
+                    </div>
+                    <h2 className={styles.accountName}>{acc.account_name}</h2>
+                    <div className={styles.accountAvatar}>
+                      <img
+                        src="/account-logo.png"
+                        alt="account"
+                        style={{
+                          width: 100,
+                          height: 100,
+                          borderRadius: '50%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                    <p className={styles.accountDetails}>
+                      Account: {acc.account_number}
+                      <br />
+                      Balance: Rs. {Number(acc.balance).toLocaleString()}
+                    </p>
+                    {acc.is_frozen && (
+                      <p
+                        style={{
+                          fontSize: '0.72rem',
+                          color: '#dc2626',
+                          marginTop: '0.5rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        This account is frozen. Contact the bank for assistance.
+                      </p>
+                    )}
                   </div>
-                </form>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Applications History */}
+          {applications.length > 0 && (
+            <div style={{ marginTop: '2rem' }}>
+              <h2
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  color: '#1d0730',
+                  marginBottom: '1rem'
+                }}
+              >
+                My Applications
+              </h2>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem'
+                }}
+              >
+                {applications.map((a) => (
+                  <div
+                    key={a.id}
+                    style={{
+                      background: 'white',
+                      borderRadius: 14,
+                      padding: '1rem 1.25rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          fontWeight: 700,
+                          color: '#1d0730',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {typeLabel[a.requested_type] || a.requested_type}
+                      </p>
+                      <p
+                        style={{
+                          color: '#aaa',
+                          fontSize: '0.75rem',
+                          marginTop: '0.2rem'
+                        }}
+                      >
+                        Applied {new Date(a.created_at).toLocaleDateString()}
+                      </p>
+                      {a.reject_reason && (
+                        <p
+                          style={{
+                            color: '#dc2626',
+                            fontSize: '0.75rem',
+                            marginTop: '0.2rem'
+                          }}
+                        >
+                          Reason: {a.reject_reason}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: 6,
+                        background: statusColors[a.status]?.bg || '#f3f4f6',
+                        color: statusColors[a.status]?.color || '#888'
+                      }}
+                    >
+                      {a.status.toUpperCase()}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          </>
-        )}
-      </section>
-    </main>
+          )}
+        </section>
+      </main>
+    </RouteGuard>
   )
 }

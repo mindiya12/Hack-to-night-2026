@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { clearSession, getSession } from '@/lib/auth'
+import { useEffect, useState } from 'react'
 
 // Minimal icon components to avoid external dependency
 type IconProps = { size?: number }
@@ -95,6 +97,18 @@ const HelpCircle = ({ size = 24 }: IconProps) => (
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const session = getSession()
+    setIsAdmin(session?.role === 'admin')
+  }, [])
+
+  function handleLogout() {
+    clearSession()
+    router.replace('/login')
+  }
 
   const menuItems = [
     { label: 'DASHBOARD', path: '/dashboard' },
@@ -130,9 +144,82 @@ export default function Sidebar() {
         </nav>
       </div>
 
+      {isAdmin && (
+        <div style={{ padding: '0 1rem 1rem' }}>
+          <Link
+            href="/admin"
+            style={{ textDecoration: 'none', display: 'block' }}
+          >
+            <button
+              style={{
+                width: '100%',
+                height: 42,
+                border: '1.5px solid rgba(255,255,255,0.3)',
+                background: 'transparent',
+                color: 'white',
+                borderRadius: 25,
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                letterSpacing: '0.5px',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  'rgba(255,255,255,0.15)'
+              }}
+              onMouseOut={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  'transparent'
+              }}
+            >
+              ⚙ ADMIN PANEL
+            </button>
+          </Link>
+        </div>
+      )}
+
       <div className="sidebar-footer">
         <Settings size={24} />
         <HelpCircle size={24} />
+        <button
+          onClick={handleLogout}
+          className="logout-btn"
+          aria-label="Sign out"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <polyline
+              points="16 17 21 12 16 7"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <line
+              x1="21"
+              y1="12"
+              x2="9"
+              y2="12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
 
       <style jsx>{`
@@ -219,6 +306,22 @@ export default function Sidebar() {
           gap: 1.5rem;
           padding: 1.5rem;
           color: white;
+          align-items: center;
+        }
+
+        .logout-btn {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          opacity: 0.75;
+          transition: opacity 0.2s;
+        }
+        .logout-btn:hover {
+          opacity: 1;
         }
 
         @media (max-width: 768px) {

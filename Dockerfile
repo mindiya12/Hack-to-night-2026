@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+    bun install
 
 EXPOSE 3000
 

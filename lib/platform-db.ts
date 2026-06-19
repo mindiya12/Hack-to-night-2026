@@ -1,4 +1,5 @@
 import { Pool } from 'pg'
+import bcrypt from 'bcryptjs'
 
 const connectionString =
   process.env.DATABASE_URL ||
@@ -49,22 +50,28 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   payload JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS scam_accounts (
+  id SERIAL PRIMARY KEY,
+  account_number TEXT UNIQUE NOT NULL,
+  reason TEXT NOT NULL,
+  reported_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS account_applications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  requested_type TEXT NOT NULL DEFAULT 'savings',
+  status TEXT NOT NULL DEFAULT 'pending',
+  reject_reason TEXT,
+  reviewed_by INTEGER REFERENCES users(id),
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `
 
-const seed = `
-INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
-  (1, 'dilara', 'password123', 'customer', 'Dilara Perera', '200112345678', 'dilara@example.test'),
-  (2, 'kasun', 'kasun', 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
-  (3, 'admin', 'admin', 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES
-  (1, '1000003423', 'Dilara Savings', 100000.00, '1234'),
-  (1, '1000004876', 'Dilara Expenses', 42000.00, '1234'),
-  (2, '2000006754', 'Kasun Current', 9870.00, '0000'),
-  (3, '9999999999', 'Admin Vault', 9999999.99, '9999')
-ON CONFLICT (account_number) DO NOTHING;
-
+const seedTransactions = `
 INSERT INTO transactions (from_account, to_account, amount, description, created_by) VALUES
   ('1000003423', '2000006754', 4500.00, 'Lunch money', 1),
   ('1000004876', '9999999999', 10000.00, 'Totally normal fee', 1),
@@ -78,10 +85,78 @@ export async function runStatement(sql: string) {
   return pool.query(sql)
 }
 
+export async function query(sql: string, params: unknown[] = []) {
+  await ensureDatabase()
+  console.log('[bank-sql-param]', sql, params)
+  return pool.query(sql, params)
+}
+
 export async function ensureDatabase() {
   if (booted) return
   await pool.query(schema)
-  await pool.query(seed)
+
+  // Idempotent column additions (safe to run on existing tables)
+  await pool.query(
+    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'savings'`
+  )
+  await pool.query(
+    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN NOT NULL DEFAULT false`
+  )
+  await pool.query(
+    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+  )
+  await pool.query(
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS flagged BOOLEAN NOT NULL DEFAULT false`
+  )
+  await pool.query(
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS flag_reason TEXT`
+  )
+  await pool.query(
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS risk_score INTEGER`
+  )
+
+  // Seed users with hashed passwords
+  const password123Hash = bcrypt.hashSync('password123', 10)
+  const kasunHash = bcrypt.hashSync('kasun', 10)
+  const adminHash = bcrypt.hashSync('admin', 10)
+
+  await pool.query(
+    `
+    INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
+      (1, 'dilara', $1, 'customer', 'Dilara Perera', '200112345678', 'dilara@example.test'),
+      (2, 'kasun', $2, 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
+      (3, 'admin', $3, 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
+    ON CONFLICT (id) DO NOTHING;
+  `,
+    [password123Hash, kasunHash, adminHash]
+  )
+
+  // Seed accounts with hashed PINs
+  const pin1234Hash = bcrypt.hashSync('1234', 10)
+  const pin0000Hash = bcrypt.hashSync('0000', 10)
+  const pin9999Hash = bcrypt.hashSync('9999', 10)
+
+  await pool.query(
+    `
+    INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES
+      (1, '1000003423', 'Dilara Savings', 100000.00, $1),
+      (1, '1000004876', 'Dilara Expenses', 42000.00, $1),
+      (2, '2000006754', 'Kasun Current', 9870.00, $2),
+      (3, '9999999999', 'Admin Vault', 9999999.99, $3)
+    ON CONFLICT (account_number) DO NOTHING;
+  `,
+    [pin1234Hash, pin0000Hash, pin9999Hash]
+  )
+
+  await pool.query(seedTransactions)
+
+  // Seed a demo application so the admin panel has something to show
+  await pool.query(`
+    INSERT INTO account_applications (user_id, requested_type, status)
+    VALUES (2, 'current', 'pending')
+    ON CONFLICT DO NOTHING
+  `)
+
   booted = true
 }
 
@@ -104,8 +179,8 @@ export function serviceFailure(reason: unknown) {
       message: issue.message,
       code: issue.code,
       detail: issue.detail,
-      trace: issue.stack,
-      databaseUrl: connectionString
+      trace: process.env.NODE_ENV === 'development' ? issue.stack : undefined
+      // databaseUrl removed for security
     },
     { status: 500 }
   )
