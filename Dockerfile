@@ -1,12 +1,13 @@
-FROM oven/bun:1
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json bun.lock* ./
+COPY package*.json ./
 
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install
+RUN npm ci
+
+COPY . .
 
 EXPOSE 3000
 
-CMD ["bun", "run", "dev"]
+CMD ["npm", "run", "dev"]
