@@ -1,7 +1,7 @@
 # HTN26 Challenge
 
 ## Getting started
-
+Architecture diagram - https://drive.google.com/file/d/115pxA_aUm2iLI7KtwJzfikg5Q12NMEKu/view?usp=sharing
 **prerequisites**
 
 - docker (with [wsl2 backend](https://docs.docker.com/desktop/features/wsl) on windows)
