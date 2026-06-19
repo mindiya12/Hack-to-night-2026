@@ -225,7 +225,7 @@ export default function Sidebar() {
       <style jsx>{`
         .sidebar {
           width: 250px;
-          background: #450043;
+          background: #0A2540;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -292,12 +292,12 @@ export default function Sidebar() {
         }
 
         .menu-item.active {
-          background: #9a5c97;
+          background: #00D4AA;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .menu-item:hover {
-          background: #9a5c97;
+          background: #00D4AA;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 

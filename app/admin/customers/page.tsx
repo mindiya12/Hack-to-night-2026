@@ -18,7 +18,7 @@ function Toast({
         top: '1.5rem',
         right: '1.5rem',
         zIndex: 100,
-        background: type === 'success' ? '#16a34a' : '#dc2626',
+        background: type === 'success' ? '#0D8A6B' : '#E63946',
         color: 'white',
         padding: '0.75rem 1.25rem',
         borderRadius: 12,
@@ -129,7 +129,7 @@ export default function CustomersPage() {
         style={{
           fontSize: '1.75rem',
           fontWeight: 800,
-          color: '#1d0730',
+          color: '#0A2540',
           marginBottom: '1.5rem'
         }}
       >
@@ -160,7 +160,7 @@ export default function CustomersPage() {
               width: '100%',
               padding: '0.6rem 1rem',
               borderRadius: 10,
-              border: '1.5px solid #e5e7eb',
+              border: '1.5px solid #E3E8EE',
               marginBottom: '1rem',
               fontSize: '0.875rem',
               outline: 'none',
@@ -168,9 +168,9 @@ export default function CustomersPage() {
             }}
           />
           {loading ? (
-            <p style={{ color: '#aaa' }}>Loading…</p>
+            <p style={{ color: '#A0AAB5' }}>Loading…</p>
           ) : filtered.length === 0 ? (
-            <p style={{ color: '#aaa' }}>No customers found.</p>
+            <p style={{ color: '#A0AAB5' }}>No customers found.</p>
           ) : (
             <div
               style={{
@@ -190,8 +190,8 @@ export default function CustomersPage() {
                     padding: '0.9rem 1rem',
                     borderRadius: 12,
                     border: '1.5px solid',
-                    borderColor: selected?.id === c.id ? '#9a5c97' : '#f3f0f6',
-                    background: selected?.id === c.id ? '#faf0fa' : 'white',
+                    borderColor: selected?.id === c.id ? '#00D4AA' : '#F6F9FC',
+                    background: selected?.id === c.id ? '#F6F9FC' : 'white',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'all 0.15s'
@@ -201,18 +201,18 @@ export default function CustomersPage() {
                     <p
                       style={{
                         fontWeight: 700,
-                        color: '#1d0730',
+                        color: '#0A2540',
                         fontSize: '0.875rem'
                       }}
                     >
                       {c.full_name}
                     </p>
-                    <p style={{ color: '#888', fontSize: '0.75rem' }}>
+                    <p style={{ color: '#4F5D75', fontSize: '0.75rem' }}>
                       @{c.username} · {c.email}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#666' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#4F5D75' }}>
                       {c.account_count} account
                       {c.account_count !== 1 ? 's' : ''}
                     </p>
@@ -220,7 +220,7 @@ export default function CustomersPage() {
                       style={{
                         fontSize: '0.75rem',
                         fontWeight: 600,
-                        color: '#450043'
+                        color: '#0A2540'
                       }}
                     >
                       Rs. {Number(c.total_balance).toLocaleString()}
@@ -254,17 +254,17 @@ export default function CustomersPage() {
                 <h2
                   style={{
                     fontWeight: 800,
-                    color: '#1d0730',
+                    color: '#0A2540',
                     fontSize: '1.1rem'
                   }}
                 >
                   {selected.full_name}
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.8rem' }}>
+                <p style={{ color: '#4F5D75', fontSize: '0.8rem' }}>
                   @{selected.username} · {selected.email}
                 </p>
                 {selected.nic && (
-                  <p style={{ color: '#aaa', fontSize: '0.75rem' }}>
+                  <p style={{ color: '#A0AAB5', fontSize: '0.75rem' }}>
                     NIC: {selected.nic}
                   </p>
                 )}
@@ -277,7 +277,7 @@ export default function CustomersPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#aaa',
+                  color: '#A0AAB5',
                   cursor: 'pointer',
                   fontSize: '1.25rem'
                 }}
@@ -290,7 +290,7 @@ export default function CustomersPage() {
               style={{
                 fontWeight: 700,
                 fontSize: '0.85rem',
-                color: '#666',
+                color: '#4F5D75',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 marginBottom: '0.75rem'
@@ -300,7 +300,7 @@ export default function CustomersPage() {
             </h3>
 
             {accounts.length === 0 ? (
-              <p style={{ color: '#bbb', fontSize: '0.875rem' }}>
+              <p style={{ color: '#A0AAB5', fontSize: '0.875rem' }}>
                 No accounts.
               </p>
             ) : (
@@ -317,7 +317,7 @@ export default function CustomersPage() {
                     style={{
                       padding: '1rem',
                       borderRadius: 12,
-                      background: a.is_frozen ? '#fff5f5' : '#faf0fa',
+                      background: a.is_frozen ? '#fff5f5' : '#F6F9FC',
                       border: `1.5px solid ${a.is_frozen ? '#fecaca' : '#f3e8f3'}`
                     }}
                   >
@@ -332,19 +332,19 @@ export default function CustomersPage() {
                         <p
                           style={{
                             fontWeight: 700,
-                            color: '#1d0730',
+                            color: '#0A2540',
                             fontSize: '0.875rem'
                           }}
                         >
                           {a.account_name}
                         </p>
-                        <p style={{ color: '#888', fontSize: '0.75rem' }}>
+                        <p style={{ color: '#4F5D75', fontSize: '0.75rem' }}>
                           {a.account_number} · {a.account_type}
                         </p>
                         <p
                           style={{
                             fontWeight: 700,
-                            color: '#450043',
+                            color: '#0A2540',
                             fontSize: '0.95rem',
                             marginTop: '0.3rem'
                           }}
@@ -365,7 +365,7 @@ export default function CustomersPage() {
                             style={{
                               fontSize: '0.65rem',
                               background: '#fef2f2',
-                              color: '#dc2626',
+                              color: '#E63946',
                               padding: '2px 8px',
                               borderRadius: 4,
                               fontWeight: 700
@@ -385,8 +385,8 @@ export default function CustomersPage() {
                             cursor: 'pointer',
                             fontWeight: 600,
                             fontSize: '0.75rem',
-                            background: a.is_frozen ? '#dcfce7' : '#fee2e2',
-                            color: a.is_frozen ? '#16a34a' : '#dc2626'
+                            background: a.is_frozen ? '#D1F2EB' : '#FAD2D5',
+                            color: a.is_frozen ? '#0D8A6B' : '#E63946'
                           }}
                         >
                           {a.is_frozen ? 'Unfreeze' : 'Freeze'}

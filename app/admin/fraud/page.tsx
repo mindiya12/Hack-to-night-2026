@@ -18,7 +18,7 @@ function Toast({
         top: '1.5rem',
         right: '1.5rem',
         zIndex: 100,
-        background: type === 'success' ? '#16a34a' : '#dc2626',
+        background: type === 'success' ? '#0D8A6B' : '#E63946',
         color: 'white',
         padding: '0.75rem 1.25rem',
         borderRadius: 12,
@@ -84,22 +84,22 @@ const thresholds = [
   {
     level: 'LOW',
     range: '0–30',
-    color: '#16a34a',
-    bg: '#dcfce7',
+    color: '#0D8A6B',
+    bg: '#D1F2EB',
     desc: 'Subtle green banner. Proceed normally.'
   },
   {
     level: 'MEDIUM',
     range: '31–59',
-    color: '#d97706',
-    bg: '#fef3c7',
+    color: '#FFB800',
+    bg: '#FFF4D6',
     desc: 'Amber warning modal. "Ask Guardian" available.'
   },
   {
     level: 'HIGH',
     range: '60+',
-    color: '#dc2626',
-    bg: '#fee2e2',
+    color: '#E63946',
+    bg: '#FAD2D5',
     desc: 'Red block. Transfer paused. Guardian required to proceed.'
   }
 ]
@@ -182,7 +182,7 @@ export default function FraudPage() {
     width: '100%',
     padding: '0.65rem 0.9rem',
     borderRadius: 10,
-    border: '1.5px solid #e5e7eb',
+    border: '1.5px solid #E3E8EE',
     fontSize: '0.875rem',
     outline: 'none',
     boxSizing: 'border-box' as const
@@ -226,14 +226,14 @@ export default function FraudPage() {
                 fontWeight: 700,
                 fontSize: '1rem',
                 marginBottom: '0.5rem',
-                color: '#1d0730'
+                color: '#0A2540'
               }}
             >
               Remove from blocklist?
             </p>
             <p
               style={{
-                color: '#666',
+                color: '#4F5D75',
                 fontSize: '0.875rem',
                 marginBottom: '1.5rem'
               }}
@@ -252,7 +252,7 @@ export default function FraudPage() {
                 style={{
                   padding: '0.6rem 1.25rem',
                   borderRadius: 10,
-                  border: '1.5px solid #e5e7eb',
+                  border: '1.5px solid #E3E8EE',
                   background: 'white',
                   fontWeight: 600,
                   cursor: 'pointer'
@@ -266,7 +266,7 @@ export default function FraudPage() {
                   padding: '0.6rem 1.25rem',
                   borderRadius: 10,
                   border: 'none',
-                  background: '#dc2626',
+                  background: '#E63946',
                   color: 'white',
                   fontWeight: 700,
                   cursor: 'pointer'
@@ -283,7 +283,7 @@ export default function FraudPage() {
         style={{
           fontSize: '1.75rem',
           fontWeight: 800,
-          color: '#1d0730',
+          color: '#0A2540',
           marginBottom: '1.75rem'
         }}
       >
@@ -314,7 +314,7 @@ export default function FraudPage() {
               style={{
                 fontWeight: 700,
                 fontSize: '1rem',
-                color: '#1d0730',
+                color: '#0A2540',
                 marginBottom: '1rem'
               }}
             >
@@ -337,7 +337,7 @@ export default function FraudPage() {
                     display: 'block',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    color: '#555',
+                    color: '#4F5D75',
                     marginBottom: '0.3rem'
                   }}
                 >
@@ -356,7 +356,7 @@ export default function FraudPage() {
                     display: 'block',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    color: '#555',
+                    color: '#4F5D75',
                     marginBottom: '0.3rem'
                   }}
                 >
@@ -376,7 +376,7 @@ export default function FraudPage() {
                   padding: '0.65rem 1rem',
                   borderRadius: 10,
                   border: 'none',
-                  background: '#450043',
+                  background: '#0A2540',
                   color: 'white',
                   fontWeight: 700,
                   fontSize: '0.8rem',
@@ -390,9 +390,9 @@ export default function FraudPage() {
             </form>
 
             {loading ? (
-              <p style={{ color: '#aaa', fontSize: '0.875rem' }}>Loading…</p>
+              <p style={{ color: '#A0AAB5', fontSize: '0.875rem' }}>Loading…</p>
             ) : reports.length === 0 ? (
-              <p style={{ color: '#bbb', fontSize: '0.875rem' }}>
+              <p style={{ color: '#A0AAB5', fontSize: '0.875rem' }}>
                 No accounts on the blocklist.
               </p>
             ) : (
@@ -422,7 +422,7 @@ export default function FraudPage() {
                       <p
                         style={{
                           fontWeight: 700,
-                          color: '#dc2626',
+                          color: '#E63946',
                           fontSize: '0.8rem',
                           fontFamily: 'monospace'
                         }}
@@ -431,7 +431,7 @@ export default function FraudPage() {
                       </p>
                       <p
                         style={{
-                          color: '#666',
+                          color: '#4F5D75',
                           fontSize: '0.72rem',
                           marginTop: '0.1rem'
                         }}
@@ -439,7 +439,7 @@ export default function FraudPage() {
                         {r.reason}
                       </p>
                       {r.reported_by_name && (
-                        <p style={{ color: '#aaa', fontSize: '0.68rem' }}>
+                        <p style={{ color: '#A0AAB5', fontSize: '0.68rem' }}>
                           Added by {r.reported_by_name} ·{' '}
                           {new Date(r.created_at).toLocaleDateString()}
                         </p>
@@ -450,7 +450,7 @@ export default function FraudPage() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#dc2626',
+                        color: '#E63946',
                         cursor: 'pointer',
                         fontSize: '1rem',
                         opacity: 0.6,
@@ -486,7 +486,7 @@ export default function FraudPage() {
               style={{
                 fontWeight: 700,
                 fontSize: '1rem',
-                color: '#1d0730',
+                color: '#0A2540',
                 marginBottom: '1rem'
               }}
             >
@@ -524,7 +524,7 @@ export default function FraudPage() {
                   <p
                     style={{
                       fontSize: '0.75rem',
-                      color: '#555',
+                      color: '#4F5D75',
                       lineHeight: 1.5
                     }}
                   >
@@ -547,7 +547,7 @@ export default function FraudPage() {
               style={{
                 fontWeight: 700,
                 fontSize: '1rem',
-                color: '#1d0730',
+                color: '#0A2540',
                 marginBottom: '1rem'
               }}
             >
@@ -569,7 +569,7 @@ export default function FraudPage() {
                     alignItems: 'flex-start',
                     padding: '0.7rem 0.9rem',
                     borderRadius: 10,
-                    background: '#faf0fa',
+                    background: '#F6F9FC',
                     border: '1px solid #f3e8f3'
                   }}
                 >
@@ -578,7 +578,7 @@ export default function FraudPage() {
                       style={{
                         fontWeight: 700,
                         fontSize: '0.8rem',
-                        color: '#1d0730'
+                        color: '#0A2540'
                       }}
                     >
                       {r.rule}
@@ -586,7 +586,7 @@ export default function FraudPage() {
                     <p
                       style={{
                         fontSize: '0.72rem',
-                        color: '#888',
+                        color: '#4F5D75',
                         marginTop: '0.15rem',
                         lineHeight: 1.4
                       }}
@@ -600,10 +600,10 @@ export default function FraudPage() {
                       fontSize: '0.75rem',
                       color:
                         r.points >= 50
-                          ? '#dc2626'
+                          ? '#E63946'
                           : r.points >= 25
-                            ? '#d97706'
-                            : '#16a34a',
+                            ? '#FFB800'
+                            : '#0D8A6B',
                       marginLeft: '0.75rem',
                       whiteSpace: 'nowrap'
                     }}

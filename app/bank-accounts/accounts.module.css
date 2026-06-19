@@ -1,7 +1,7 @@
 /* ===== ROOT VARIABLES ===== */
 .accountsPage {
   /* Colors */
-  --color-primary: #450043;
+  --color-primary: #0A2540;
   --color-primary-hover: #5a0058;
   --color-primary-light: rgba(69, 0, 67, 0.1);
   --color-secondary: #2563eb;
@@ -15,7 +15,7 @@
   --color-text-light: #6b7280;
   --color-text-muted: #9ca3af;
   
-  --color-border: #e5e7eb;
+  --color-border: #E3E8EE;
   --color-border-light: #f0f0f0;
   --color-shadow: rgba(0, 0, 0, 0.1);
   --color-shadow-hover: rgba(0, 0, 0, 0.2);
@@ -27,7 +27,7 @@
   --color-avatar-bg: #93c5fd;
   --color-card-border: #3b82f6;
   --color-hover-bg: #f0f0f0;
-  --color-delete-hover: #fee2e2;
+  --color-delete-hover: #FAD2D5;
   
   /* Spacing */
   --spacing-xs: 0.25rem;

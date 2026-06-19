@@ -210,7 +210,7 @@ export default function AdminSidebar() {
         .admin-sidebar {
           width: 240px;
           min-height: 100vh;
-          background: #1d0730;
+          background: #0A2540;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -227,7 +227,7 @@ export default function AdminSidebar() {
         .logo-img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
         .brand { color: white; font-size: 14px; font-weight: 800; letter-spacing: 0.5px; }
         .role-tag {
-          color: #9a5c97;
+          color: #00D4AA;
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 1.5px;

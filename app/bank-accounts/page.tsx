@@ -12,9 +12,9 @@ const typeLabel: Record<string, string> = {
 }
 
 const statusColors: Record<string, { bg: string; color: string }> = {
-  pending: { bg: '#fef3c7', color: '#d97706' },
-  approved: { bg: '#dcfce7', color: '#16a34a' },
-  rejected: { bg: '#fee2e2', color: '#dc2626' }
+  pending: { bg: '#FFF4D6', color: '#FFB800' },
+  approved: { bg: '#D1F2EB', color: '#0D8A6B' },
+  rejected: { bg: '#FAD2D5', color: '#E63946' }
 }
 
 export default function AccountsPage() {
@@ -91,7 +91,7 @@ export default function AccountsPage() {
                 padding: '0.6rem 1.25rem',
                 borderRadius: 999,
                 border: 'none',
-                background: '#450043',
+                background: '#0A2540',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '0.875rem',
@@ -111,8 +111,8 @@ export default function AccountsPage() {
                 padding: '0.75rem 1.25rem',
                 borderRadius: 12,
                 background:
-                  statusMsg.type === 'success' ? '#dcfce7' : '#fee2e2',
-                color: statusMsg.type === 'success' ? '#166534' : '#991b1b',
+                  statusMsg.type === 'success' ? '#D1F2EB' : '#FAD2D5',
+                color: statusMsg.type === 'success' ? '#0D8A6B' : '#E63946',
                 fontWeight: 600,
                 fontSize: '0.875rem',
                 display: 'flex',
@@ -152,7 +152,7 @@ export default function AccountsPage() {
                 style={{
                   fontWeight: 700,
                   fontSize: '1rem',
-                  color: '#1d0730',
+                  color: '#0A2540',
                   marginBottom: '1rem'
                 }}
               >
@@ -161,7 +161,7 @@ export default function AccountsPage() {
               <p
                 style={{
                   fontSize: '0.8rem',
-                  color: '#888',
+                  color: '#4F5D75',
                   marginBottom: '1rem'
                 }}
               >
@@ -174,7 +174,7 @@ export default function AccountsPage() {
                     display: 'block',
                     fontWeight: 600,
                     fontSize: '0.8rem',
-                    color: '#555',
+                    color: '#4F5D75',
                     marginBottom: '0.4rem'
                   }}
                 >
@@ -187,7 +187,7 @@ export default function AccountsPage() {
                     width: '100%',
                     padding: '0.65rem 0.9rem',
                     borderRadius: 10,
-                    border: '1.5px solid #e5e7eb',
+                    border: '1.5px solid #E3E8EE',
                     fontSize: '0.9rem',
                     outline: 'none',
                     marginBottom: '1rem',
@@ -206,7 +206,7 @@ export default function AccountsPage() {
                     padding: '0.7rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#450043',
+                    background: '#0A2540',
                     color: 'white',
                     fontWeight: 700,
                     fontSize: '0.9rem',
@@ -226,7 +226,7 @@ export default function AccountsPage() {
               style={{
                 textAlign: 'center',
                 padding: '3rem 1rem',
-                color: '#aaa'
+                color: '#A0AAB5'
               }}
             >
               <p
@@ -266,7 +266,7 @@ export default function AccountsPage() {
                       <span
                         style={{
                           background: '#f3e8f3',
-                          color: '#450043',
+                          color: '#0A2540',
                           fontSize: '0.65rem',
                           fontWeight: 700,
                           padding: '2px 8px',
@@ -278,8 +278,8 @@ export default function AccountsPage() {
                       {acc.is_frozen && (
                         <span
                           style={{
-                            background: '#fee2e2',
-                            color: '#dc2626',
+                            background: '#FAD2D5',
+                            color: '#E63946',
                             fontSize: '0.65rem',
                             fontWeight: 700,
                             padding: '2px 8px',
@@ -312,7 +312,7 @@ export default function AccountsPage() {
                       <p
                         style={{
                           fontSize: '0.72rem',
-                          color: '#dc2626',
+                          color: '#E63946',
                           marginTop: '0.5rem',
                           fontWeight: 600
                         }}
@@ -333,7 +333,7 @@ export default function AccountsPage() {
                 style={{
                   fontWeight: 700,
                   fontSize: '1rem',
-                  color: '#1d0730',
+                  color: '#0A2540',
                   marginBottom: '1rem'
                 }}
               >
@@ -363,7 +363,7 @@ export default function AccountsPage() {
                       <p
                         style={{
                           fontWeight: 700,
-                          color: '#1d0730',
+                          color: '#0A2540',
                           fontSize: '0.875rem'
                         }}
                       >
@@ -371,7 +371,7 @@ export default function AccountsPage() {
                       </p>
                       <p
                         style={{
-                          color: '#aaa',
+                          color: '#A0AAB5',
                           fontSize: '0.75rem',
                           marginTop: '0.2rem'
                         }}
@@ -381,7 +381,7 @@ export default function AccountsPage() {
                       {a.reject_reason && (
                         <p
                           style={{
-                            color: '#dc2626',
+                            color: '#E63946',
                             fontSize: '0.75rem',
                             marginTop: '0.2rem'
                           }}
@@ -397,7 +397,7 @@ export default function AccountsPage() {
                         padding: '3px 10px',
                         borderRadius: 6,
                         background: statusColors[a.status]?.bg || '#f3f4f6',
-                        color: statusColors[a.status]?.color || '#888'
+                        color: statusColors[a.status]?.color || '#4F5D75'
                       }}
                     >
                       {a.status.toUpperCase()}

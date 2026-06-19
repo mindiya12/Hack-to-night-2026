@@ -18,7 +18,7 @@ function Toast({
         top: '1.5rem',
         right: '1.5rem',
         zIndex: 100,
-        background: type === 'success' ? '#16a34a' : '#dc2626',
+        background: type === 'success' ? '#0D8A6B' : '#E63946',
         color: 'white',
         padding: '0.75rem 1.25rem',
         borderRadius: 12,
@@ -132,8 +132,8 @@ export default function ApplicationsPage() {
     cursor: 'pointer',
     fontWeight: 600,
     fontSize: '0.8rem',
-    background: filter === t ? '#450043' : 'white',
-    color: filter === t ? 'white' : '#666',
+    background: filter === t ? '#0A2540' : 'white',
+    color: filter === t ? 'white' : '#4F5D75',
     boxShadow: filter === t ? '0 2px 8px rgba(69,0,67,0.3)' : 'none',
     transition: 'all 0.15s'
   })
@@ -152,7 +152,7 @@ export default function ApplicationsPage() {
         style={{
           fontSize: '1.75rem',
           fontWeight: 800,
-          color: '#1d0730',
+          color: '#0A2540',
           marginBottom: '1.5rem'
         }}
       >
@@ -187,11 +187,15 @@ export default function ApplicationsPage() {
         }}
       >
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#aaa' }}>
+          <div
+            style={{ padding: '3rem', textAlign: 'center', color: '#A0AAB5' }}
+          >
             Loading…
           </div>
         ) : apps.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#bbb' }}>
+          <div
+            style={{ padding: '3rem', textAlign: 'center', color: '#A0AAB5' }}
+          >
             No {filter} applications.
           </div>
         ) : (
@@ -199,7 +203,7 @@ export default function ApplicationsPage() {
             <thead>
               <tr
                 style={{
-                  background: '#faf0fa',
+                  background: '#F6F9FC',
                   borderBottom: '2px solid #f3e8f3'
                 }}
               >
@@ -218,7 +222,7 @@ export default function ApplicationsPage() {
                       textAlign: 'left',
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: '#666',
+                      color: '#4F5D75',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px'
                     }}
@@ -234,7 +238,7 @@ export default function ApplicationsPage() {
                   <td
                     style={{
                       padding: '0.9rem 1rem',
-                      color: '#aaa',
+                      color: '#A0AAB5',
                       fontSize: '0.8rem'
                     }}
                   >
@@ -244,13 +248,13 @@ export default function ApplicationsPage() {
                     <p
                       style={{
                         fontWeight: 700,
-                        color: '#1d0730',
+                        color: '#0A2540',
                         fontSize: '0.875rem'
                       }}
                     >
                       {a.full_name}
                     </p>
-                    <p style={{ color: '#888', fontSize: '0.75rem' }}>
+                    <p style={{ color: '#4F5D75', fontSize: '0.75rem' }}>
                       @{a.username}
                     </p>
                   </td>
@@ -267,7 +271,7 @@ export default function ApplicationsPage() {
                   <td
                     style={{
                       padding: '0.9rem 1rem',
-                      color: '#888',
+                      color: '#4F5D75',
                       fontSize: '0.8rem'
                     }}
                   >
@@ -282,16 +286,16 @@ export default function ApplicationsPage() {
                         fontWeight: 700,
                         background:
                           a.status === 'pending'
-                            ? '#fef3c7'
+                            ? '#FFF4D6'
                             : a.status === 'approved'
-                              ? '#dcfce7'
+                              ? '#D1F2EB'
                               : '#fef2f2',
                         color:
                           a.status === 'pending'
-                            ? '#d97706'
+                            ? '#FFB800'
                             : a.status === 'approved'
-                              ? '#16a34a'
-                              : '#dc2626'
+                              ? '#0D8A6B'
+                              : '#E63946'
                       }}
                     >
                       {a.status.toUpperCase()}
@@ -309,8 +313,8 @@ export default function ApplicationsPage() {
                             padding: '0.35rem 0.9rem',
                             borderRadius: 8,
                             border: 'none',
-                            background: '#dcfce7',
-                            color: '#16a34a',
+                            background: '#D1F2EB',
+                            color: '#0D8A6B',
                             fontWeight: 700,
                             fontSize: '0.75rem',
                             cursor: 'pointer'
@@ -327,8 +331,8 @@ export default function ApplicationsPage() {
                             padding: '0.35rem 0.9rem',
                             borderRadius: 8,
                             border: 'none',
-                            background: '#fee2e2',
-                            color: '#dc2626',
+                            background: '#FAD2D5',
+                            color: '#E63946',
                             fontWeight: 700,
                             fontSize: '0.75rem',
                             cursor: 'pointer'
@@ -338,7 +342,7 @@ export default function ApplicationsPage() {
                         </button>
                       </div>
                     ) : (
-                      <p style={{ fontSize: '0.75rem', color: '#888' }}>
+                      <p style={{ fontSize: '0.75rem', color: '#4F5D75' }}>
                         {a.status === 'rejected'
                           ? a.reject_reason || '—'
                           : `Approved by ${a.reviewed_by_name || 'admin'}`}
@@ -379,7 +383,7 @@ export default function ApplicationsPage() {
             <h2
               style={{
                 fontWeight: 800,
-                color: '#1d0730',
+                color: '#0A2540',
                 marginBottom: '0.5rem',
                 fontSize: '1.2rem'
               }}
@@ -390,7 +394,7 @@ export default function ApplicationsPage() {
             </h2>
             <p
               style={{
-                color: '#888',
+                color: '#4F5D75',
                 fontSize: '0.875rem',
                 marginBottom: '1.25rem'
               }}
@@ -406,7 +410,7 @@ export default function ApplicationsPage() {
                     display: 'block',
                     fontWeight: 600,
                     fontSize: '0.8rem',
-                    color: '#555',
+                    color: '#4F5D75',
                     marginBottom: '0.4rem'
                   }}
                 >
@@ -419,7 +423,7 @@ export default function ApplicationsPage() {
                     width: '100%',
                     padding: '0.6rem',
                     borderRadius: 10,
-                    border: '1.5px solid #e5e7eb',
+                    border: '1.5px solid #E3E8EE',
                     fontSize: '0.875rem',
                     outline: 'none'
                   }}
@@ -431,7 +435,7 @@ export default function ApplicationsPage() {
                 <p
                   style={{
                     fontSize: '0.75rem',
-                    color: '#aaa',
+                    color: '#A0AAB5',
                     marginTop: '0.5rem'
                   }}
                 >
@@ -446,7 +450,7 @@ export default function ApplicationsPage() {
                     display: 'block',
                     fontWeight: 600,
                     fontSize: '0.8rem',
-                    color: '#555',
+                    color: '#4F5D75',
                     marginBottom: '0.4rem'
                   }}
                 >
@@ -460,7 +464,7 @@ export default function ApplicationsPage() {
                     width: '100%',
                     padding: '0.6rem',
                     borderRadius: 10,
-                    border: '1.5px solid #e5e7eb',
+                    border: '1.5px solid #E3E8EE',
                     fontSize: '0.875rem',
                     outline: 'none',
                     resize: 'none',
@@ -483,7 +487,7 @@ export default function ApplicationsPage() {
                 style={{
                   padding: '0.6rem 1.25rem',
                   borderRadius: 10,
-                  border: '1.5px solid #e5e7eb',
+                  border: '1.5px solid #E3E8EE',
                   background: 'white',
                   fontWeight: 600,
                   cursor: 'pointer'
@@ -502,7 +506,7 @@ export default function ApplicationsPage() {
                   cursor: 'pointer',
                   opacity: submitting ? 0.6 : 1,
                   background:
-                    modal.action === 'approve' ? '#450043' : '#dc2626',
+                    modal.action === 'approve' ? '#0A2540' : '#E63946',
                   color: 'white'
                 }}
               >

@@ -15,20 +15,20 @@ export default function Home() {
             className="rounded-full"
             style={{ width: 'auto', height: 'auto' }}
           />
-          <h1 className="text-2xl font-bold tracking-tight text-[#1d0730]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0A2540]">
             Nova Bank
           </h1>
         </div>
         <div className="flex gap-4">
           <Link
             href="/login"
-            className="px-6 py-2.5 rounded-full font-bold text-[#1d0730] hover:bg-gray-100 transition"
+            className="px-6 py-2.5 rounded-full font-bold text-[#0A2540] hover:bg-gray-100 transition"
           >
             Login
           </Link>
           <Link
             href="/sign-up"
-            className="px-6 py-2.5 rounded-full font-bold bg-[#1d0730] text-white hover:bg-[#2d0b4a] transition"
+            className="px-6 py-2.5 rounded-full font-bold bg-[#0A2540] text-white hover:bg-[#143A5C] transition"
           >
             Sign Up
           </Link>
@@ -41,7 +41,7 @@ export default function Home() {
 
         <h2 className="text-6xl md:text-7xl font-extrabold tracking-tight mb-8 max-w-4xl leading-tight">
           The Future of Banking is{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9a5c97] to-indigo-600">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D4AA] to-indigo-600">
             Smart & Secure
           </span>
         </h2>
@@ -53,7 +53,7 @@ export default function Home() {
         <div className="flex gap-6">
           <Link
             href="/sign-up"
-            className="px-8 py-4 rounded-full font-bold text-lg bg-[#9a5c97] text-white hover:bg-[#7a4676] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1"
+            className="px-8 py-4 rounded-full font-bold text-lg bg-[#00D4AA] text-white hover:bg-[#00A383] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1"
           >
             Open an Account Today
           </Link>
@@ -63,9 +63,9 @@ export default function Home() {
       {/* Features Grid */}
       <section className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+          <div className="bg-[#FFFFFF] p-10 rounded-[2rem] border border-gray-100">
             <div className="text-4xl mb-6">🛡️</div>
-            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+            <h3 className="text-2xl font-bold mb-4 text-[#0A2540]">
               Scam Shield
             </h3>
             <p className="text-gray-600 leading-relaxed">
@@ -73,9 +73,9 @@ export default function Home() {
               protect you from advanced social engineering and fraud.
             </p>
           </div>
-          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+          <div className="bg-[#FFFFFF] p-10 rounded-[2rem] border border-gray-100">
             <div className="text-4xl mb-6">📊</div>
-            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+            <h3 className="text-2xl font-bold mb-4 text-[#0A2540]">
               Smart Spend
             </h3>
             <p className="text-gray-600 leading-relaxed">
@@ -83,9 +83,9 @@ export default function Home() {
               automated categorization, and intelligent AI insights.
             </p>
           </div>
-          <div className="bg-[#f8f9fa] p-10 rounded-[2rem] border border-gray-100">
+          <div className="bg-[#FFFFFF] p-10 rounded-[2rem] border border-gray-100">
             <div className="text-4xl mb-6">⚡</div>
-            <h3 className="text-2xl font-bold mb-4 text-[#1d0730]">
+            <h3 className="text-2xl font-bold mb-4 text-[#0A2540]">
               Instant Payments
             </h3>
             <p className="text-gray-600 leading-relaxed">

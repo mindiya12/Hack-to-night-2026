@@ -19,7 +19,7 @@ function Field({
         style={{
           fontSize: '0.8rem',
           fontWeight: 700,
-          color: '#555',
+          color: '#4F5D75',
           textTransform: 'uppercase',
           letterSpacing: '0.5px'
         }}
@@ -35,11 +35,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.75rem 1rem',
   borderRadius: 12,
-  border: '1.5px solid #e8e0e8',
+  border: '1.5px solid #E3E8EE',
   fontSize: '0.95rem',
   outline: 'none',
   background: 'white',
-  color: '#1d0730',
+  color: '#0A2540',
   boxSizing: 'border-box',
   transition: 'border-color 0.2s'
 }
@@ -188,7 +188,7 @@ export default function BankTransfer() {
   return (
     <RouteGuard>
       <div
-        style={{ display: 'flex', minHeight: '100vh', background: '#f5f0f7' }}
+        style={{ display: 'flex', minHeight: '100vh', background: '#F6F9FC' }}
       >
         <Sidebar />
         <main
@@ -198,7 +198,7 @@ export default function BankTransfer() {
             style={{
               fontSize: '1.75rem',
               fontWeight: 800,
-              color: '#1d0730',
+              color: '#0A2540',
               marginBottom: '1.5rem'
             }}
           >
@@ -213,13 +213,13 @@ export default function BankTransfer() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '2rem',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <h2
                   style={{
                     fontWeight: 700,
-                    color: '#1d0730',
+                    color: '#0A2540',
                     margin: '0 0 1.5rem',
                     fontSize: '1.1rem'
                   }}
@@ -284,7 +284,7 @@ export default function BankTransfer() {
                 {error && (
                   <p
                     style={{
-                      color: '#dc2626',
+                      color: '#E63946',
                       fontSize: '0.875rem',
                       fontWeight: 600,
                       marginTop: '1rem',
@@ -304,7 +304,7 @@ export default function BankTransfer() {
                     padding: '0.85rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#450043',
+                    background: '#0A2540',
                     color: 'white',
                     fontWeight: 700,
                     fontSize: '1rem',
@@ -323,13 +323,13 @@ export default function BankTransfer() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '2rem',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 {/* Transfer Summary */}
                 <div
                   style={{
-                    background: '#f9f0f9',
+                    background: '#F6F9FC',
                     borderRadius: 16,
                     padding: '1.25rem',
                     marginBottom: '1.5rem'
@@ -339,7 +339,7 @@ export default function BankTransfer() {
                     style={{
                       margin: '0 0 0.75rem',
                       fontWeight: 700,
-                      color: '#1d0730',
+                      color: '#0A2540',
                       fontSize: '0.9rem'
                     }}
                   >
@@ -369,11 +369,11 @@ export default function BankTransfer() {
                           fontSize: '0.875rem'
                         }}
                       >
-                        <span style={{ color: '#888' }}>{k}</span>
+                        <span style={{ color: '#4F5D75' }}>{k}</span>
                         <span
                           style={{
                             fontWeight: 600,
-                            color: '#1d0730',
+                            color: '#0A2540',
                             textAlign: 'right',
                             maxWidth: '60%',
                             wordBreak: 'break-all'
@@ -390,7 +390,7 @@ export default function BankTransfer() {
                 <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                   <p
                     style={{
-                      color: '#555',
+                      color: '#4F5D75',
                       fontSize: '0.9rem',
                       marginBottom: '0.25rem'
                     }}
@@ -399,7 +399,7 @@ export default function BankTransfer() {
                   </p>
                   <p
                     style={{
-                      color: '#450043',
+                      color: '#0A2540',
                       fontWeight: 700,
                       fontSize: '0.95rem',
                       marginBottom: '1.25rem'
@@ -425,14 +425,14 @@ export default function BankTransfer() {
                         fontWeight: 800,
                         letterSpacing: '0.5rem',
                         padding: '0.75rem',
-                        color: '#450043'
+                        color: '#0A2540'
                       }}
                     />
 
                     {error && (
                       <p
                         style={{
-                          color: '#dc2626',
+                          color: '#E63946',
                           fontSize: '0.875rem',
                           fontWeight: 600,
                           marginTop: '0.75rem'
@@ -451,7 +451,7 @@ export default function BankTransfer() {
                         padding: '0.85rem',
                         borderRadius: 999,
                         border: 'none',
-                        background: '#450043',
+                        background: '#0A2540',
                         color: 'white',
                         fontWeight: 700,
                         fontSize: '1rem',
@@ -480,7 +480,7 @@ export default function BankTransfer() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#888',
+                        color: '#4F5D75',
                         fontSize: '0.85rem',
                         cursor: 'pointer',
                         fontWeight: 600
@@ -494,7 +494,7 @@ export default function BankTransfer() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#450043',
+                        color: '#0A2540',
                         fontSize: '0.85rem',
                         cursor: 'pointer',
                         fontWeight: 600,
@@ -515,7 +515,7 @@ export default function BankTransfer() {
                   borderRadius: 24,
                   padding: '3rem 2rem',
                   textAlign: 'center',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <div
@@ -523,7 +523,7 @@ export default function BankTransfer() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#dcfce7',
+                    background: '#D1F2EB',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -536,7 +536,7 @@ export default function BankTransfer() {
                 <h2
                   style={{
                     fontWeight: 800,
-                    color: '#166534',
+                    color: '#0D8A6B',
                     margin: '0 0 0.5rem'
                   }}
                 >
@@ -544,7 +544,7 @@ export default function BankTransfer() {
                 </h2>
                 <p
                   style={{
-                    color: '#888',
+                    color: '#4F5D75',
                     fontSize: '0.875rem',
                     margin: '0 0 1.5rem'
                   }}
@@ -557,7 +557,7 @@ export default function BankTransfer() {
                     padding: '0.75rem 2rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#450043',
+                    background: '#0A2540',
                     color: 'white',
                     fontWeight: 700,
                     cursor: 'pointer'
@@ -575,7 +575,7 @@ export default function BankTransfer() {
                   borderRadius: 24,
                   padding: '3rem 2rem',
                   textAlign: 'center',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <div
@@ -583,7 +583,7 @@ export default function BankTransfer() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#fee2e2',
+                    background: '#FAD2D5',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -596,7 +596,7 @@ export default function BankTransfer() {
                 <h2
                   style={{
                     fontWeight: 800,
-                    color: '#991b1b',
+                    color: '#E63946',
                     margin: '0 0 0.5rem'
                   }}
                 >
@@ -604,7 +604,7 @@ export default function BankTransfer() {
                 </h2>
                 <p
                   style={{
-                    color: '#666',
+                    color: '#4F5D75',
                     fontSize: '0.9rem',
                     margin: '0 0 1.5rem'
                   }}
@@ -617,7 +617,7 @@ export default function BankTransfer() {
                     padding: '0.75rem 2rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#dc2626',
+                    background: '#E63946',
                     color: 'white',
                     fontWeight: 700,
                     cursor: 'pointer'

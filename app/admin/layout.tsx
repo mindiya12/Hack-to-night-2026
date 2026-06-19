@@ -11,7 +11,7 @@ export default function AdminLayout({
   return (
     <AdminGuard>
       <div
-        style={{ display: 'flex', minHeight: '100vh', background: '#f3f0f6' }}
+        style={{ display: 'flex', minHeight: '100vh', background: '#F6F9FC' }}
       >
         <AdminSidebar />
         <main style={{ flex: 1, overflowY: 'auto' }}>{children}</main>

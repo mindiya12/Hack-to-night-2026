@@ -78,7 +78,7 @@ export function ScamShieldModal({
               <button
                 onClick={askGuardian}
                 disabled={loading}
-                className="w-full bg-[#1d0730] hover:bg-[#2d0b4a] text-white font-bold py-4 rounded-full transition flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full bg-[#0A2540] hover:bg-[#143A5C] text-white font-bold py-4 rounded-full transition flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 🛡️ {loading ? 'Analyzing...' : 'Ask Guardian for Advice'}
               </button>

@@ -44,7 +44,7 @@ export default function LoginPage() {
     <section className="mx-auto flex min-h-[480px] w-full max-w-[1060px] overflow-hidden rounded-[56px] bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.30),0_4px_8px_3px_rgba(0,0,0,0.15)] lg:min-h-[660px]">
       <aside
         aria-label="Nova Bank shell artwork"
-        className="relative hidden w-[46.2%] shrink-0 overflow-hidden bg-[#1d0730] md:block"
+        className="relative hidden w-[46.2%] shrink-0 overflow-hidden bg-[#0A2540] md:block"
       >
         <img
           src="/loginshellbg.png"

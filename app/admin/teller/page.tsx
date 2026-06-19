@@ -18,7 +18,7 @@ function Toast({
         top: '1.5rem',
         right: '1.5rem',
         zIndex: 100,
-        background: type === 'success' ? '#16a34a' : '#dc2626',
+        background: type === 'success' ? '#0D8A6B' : '#E63946',
         color: 'white',
         padding: '0.75rem 1.25rem',
         borderRadius: 12,
@@ -150,7 +150,7 @@ export default function TellerPage() {
     width: '100%',
     padding: '0.65rem 0.9rem',
     borderRadius: 10,
-    border: '1.5px solid #e5e7eb',
+    border: '1.5px solid #E3E8EE',
     fontSize: '0.9rem',
     outline: 'none',
     boxSizing: 'border-box' as const
@@ -159,7 +159,7 @@ export default function TellerPage() {
     display: 'block' as const,
     fontWeight: 600,
     fontSize: '0.8rem',
-    color: '#555',
+    color: '#4F5D75',
     marginBottom: '0.4rem'
   }
 
@@ -177,13 +177,15 @@ export default function TellerPage() {
         style={{
           fontSize: '1.75rem',
           fontWeight: 800,
-          color: '#1d0730',
+          color: '#0A2540',
           marginBottom: '0.4rem'
         }}
       >
         Teller Operations
       </h1>
-      <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '2rem' }}>
+      <p
+        style={{ color: '#4F5D75', fontSize: '0.875rem', marginBottom: '2rem' }}
+      >
         Post deposits and withdrawals to customer accounts. Every operation is
         audited.
       </p>
@@ -209,7 +211,7 @@ export default function TellerPage() {
             style={{
               fontWeight: 700,
               fontSize: '1rem',
-              color: '#1d0730',
+              color: '#0A2540',
               marginBottom: '1.25rem'
             }}
           >
@@ -255,7 +257,7 @@ export default function TellerPage() {
               {selectedAccount?.is_frozen && (
                 <p
                   style={{
-                    color: '#dc2626',
+                    color: '#E63946',
                     fontSize: '0.75rem',
                     marginTop: '0.3rem'
                   }}
@@ -286,21 +288,21 @@ export default function TellerPage() {
                       borderColor:
                         opType === t
                           ? t === 'deposit'
-                            ? '#16a34a'
-                            : '#dc2626'
-                          : '#e5e7eb',
+                            ? '#0D8A6B'
+                            : '#E63946'
+                          : '#E3E8EE',
                       background:
                         opType === t
                           ? t === 'deposit'
-                            ? '#dcfce7'
-                            : '#fee2e2'
+                            ? '#D1F2EB'
+                            : '#FAD2D5'
                           : 'white',
                       color:
                         opType === t
                           ? t === 'deposit'
-                            ? '#16a34a'
-                            : '#dc2626'
-                          : '#888'
+                            ? '#0D8A6B'
+                            : '#E63946'
+                          : '#4F5D75'
                     }}
                   >
                     {t === 'deposit' ? '+ Deposit' : '− Withdrawal'}
@@ -340,7 +342,7 @@ export default function TellerPage() {
                 padding: '0.75rem',
                 borderRadius: 12,
                 border: 'none',
-                background: '#450043',
+                background: '#0A2540',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '0.9rem',
@@ -372,7 +374,7 @@ export default function TellerPage() {
                 style={{
                   fontWeight: 800,
                   fontSize: '1.1rem',
-                  color: result.ok ? '#16a34a' : '#dc2626',
+                  color: result.ok ? '#0D8A6B' : '#E63946',
                   marginBottom: '0.5rem'
                 }}
               >
@@ -380,7 +382,7 @@ export default function TellerPage() {
               </p>
               <p
                 style={{
-                  color: '#555',
+                  color: '#4F5D75',
                   fontSize: '0.875rem',
                   marginBottom: result.ok ? '0.75rem' : 0
                 }}
@@ -388,10 +390,10 @@ export default function TellerPage() {
                 {result.message}
               </p>
               {result.ok && (
-                <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                <div style={{ fontSize: '0.8rem', color: '#4F5D75' }}>
                   <p>
                     New Balance:{' '}
-                    <strong style={{ color: '#1d0730' }}>
+                    <strong style={{ color: '#0A2540' }}>
                       Rs. {Number(result.newBalance).toLocaleString()}
                     </strong>
                   </p>
@@ -416,7 +418,7 @@ export default function TellerPage() {
                 style={{
                   fontWeight: 700,
                   fontSize: '0.85rem',
-                  color: '#888',
+                  color: '#4F5D75',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem'
@@ -425,26 +427,26 @@ export default function TellerPage() {
                 Selected Account
               </h3>
               <p
-                style={{ fontWeight: 700, color: '#1d0730', fontSize: '1rem' }}
+                style={{ fontWeight: 700, color: '#0A2540', fontSize: '1rem' }}
               >
                 {selectedAccount.account_name}
               </p>
               <p
                 style={{
-                  color: '#888',
+                  color: '#4F5D75',
                   fontSize: '0.8rem',
                   marginTop: '0.2rem'
                 }}
               >
                 {selectedAccount.account_number}
               </p>
-              <p style={{ color: '#888', fontSize: '0.8rem' }}>
+              <p style={{ color: '#4F5D75', fontSize: '0.8rem' }}>
                 {selectedAccount.account_type}
               </p>
               <p
                 style={{
                   fontWeight: 800,
-                  color: '#450043',
+                  color: '#0A2540',
                   fontSize: '1.5rem',
                   marginTop: '0.75rem'
                 }}

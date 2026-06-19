@@ -33,7 +33,7 @@ function QuickAction({
         gap: '0.5rem',
         padding: '1rem 0.75rem',
         borderRadius: 20,
-        border: '1.5px solid #ede5ed',
+        border: '1.5px solid #E3E8EE',
         background: 'white',
         cursor: 'pointer',
         flex: 1,
@@ -41,11 +41,11 @@ function QuickAction({
         transition: 'all 0.2s'
       }}
       onMouseOver={(e) => {
-        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#9a5c97'
-        ;(e.currentTarget as HTMLButtonElement).style.background = '#faf0fa'
+        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#00D4AA'
+        ;(e.currentTarget as HTMLButtonElement).style.background = '#F6F9FC'
       }}
       onMouseOut={(e) => {
-        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#ede5ed'
+        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#E3E8EE'
         ;(e.currentTarget as HTMLButtonElement).style.background = 'white'
       }}
     >
@@ -54,7 +54,7 @@ function QuickAction({
         style={{
           fontSize: '0.75rem',
           fontWeight: 700,
-          color: '#1d0730',
+          color: '#0A2540',
           textAlign: 'center',
           lineHeight: 1.3
         }}
@@ -123,7 +123,7 @@ export default function Dashboard() {
         style={{
           display: 'flex',
           minHeight: '100vh',
-          background: '#f5f0f7',
+          background: '#F6F9FC',
           fontFamily: 'system-ui, -apple-system, sans-serif'
         }}
       >
@@ -150,7 +150,7 @@ export default function Dashboard() {
             <div>
               <p
                 style={{
-                  color: '#9a5c97',
+                  color: '#00D4AA',
                   fontSize: '0.8rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
@@ -164,7 +164,7 @@ export default function Dashboard() {
                 style={{
                   fontSize: '1.75rem',
                   fontWeight: 900,
-                  color: '#1d0730',
+                  color: '#0A2540',
                   margin: '0.2rem 0 0'
                 }}
               >
@@ -179,7 +179,7 @@ export default function Dashboard() {
                 height: 46,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '3px solid #e8d0e8'
+                border: '3px solid #E3E8EE'
               }}
             />
           </div>
@@ -187,7 +187,7 @@ export default function Dashboard() {
           {loading ? (
             <div
               style={{
-                color: '#9a5c97',
+                color: '#00D4AA',
                 fontSize: '0.9rem',
                 padding: '2rem 0'
               }}
@@ -200,7 +200,7 @@ export default function Dashboard() {
               <div
                 style={{
                   background:
-                    'linear-gradient(135deg, #1d0730 0%, #450043 55%, #6b2568 100%)',
+                    'linear-gradient(135deg, #0A2540 0%, #0A2540 55%, #6b2568 100%)',
                   borderRadius: 28,
                   padding: '2rem',
                   color: 'white',
@@ -339,8 +339,8 @@ export default function Dashboard() {
                     {selectedAccount.is_frozen && (
                       <span
                         style={{
-                          background: '#fee2e2',
-                          color: '#991b1b',
+                          background: '#FAD2D5',
+                          color: '#E63946',
                           fontSize: '0.7rem',
                           fontWeight: 800,
                           padding: '0.3rem 0.75rem',
@@ -362,12 +362,12 @@ export default function Dashboard() {
                   borderRadius: 24,
                   padding: '1.25rem',
                   marginBottom: '1.5rem',
-                  boxShadow: '0 2px 12px rgba(69,0,67,0.06)'
+                  boxShadow: '0 2px 12px rgba(10,37,64,0.06)'
                 }}
               >
                 <p
                   style={{
-                    color: '#555',
+                    color: '#4F5D75',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
@@ -410,7 +410,7 @@ export default function Dashboard() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '1.5rem',
-                  boxShadow: '0 2px 12px rgba(69,0,67,0.06)',
+                  boxShadow: '0 2px 12px rgba(10,37,64,0.06)',
                   overflowX: 'auto'
                 }}
               >
@@ -425,7 +425,7 @@ export default function Dashboard() {
                 >
                   <p
                     style={{
-                      color: '#1d0730',
+                      color: '#0A2540',
                       fontWeight: 800,
                       fontSize: '1rem',
                       margin: 0
@@ -438,7 +438,7 @@ export default function Dashboard() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#9a5c97',
+                      color: '#00D4AA',
                       fontSize: '0.8rem',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -454,7 +454,7 @@ export default function Dashboard() {
                     style={{
                       textAlign: 'center',
                       padding: '2rem 0',
-                      color: '#bbb',
+                      color: '#A0AAB5',
                       fontSize: '0.9rem'
                     }}
                   >
@@ -496,7 +496,7 @@ export default function Dashboard() {
                             gap: '0.75rem',
                             padding: '0.6rem 0.75rem',
                             borderRadius: 12,
-                            background: '#faf8fc',
+                            background: '#F6F9FC',
                             minWidth: 0
                           }}
                         >
@@ -505,7 +505,7 @@ export default function Dashboard() {
                               width: 38,
                               height: 38,
                               borderRadius: 12,
-                              background: isDebit ? '#fee2e2' : '#dcfce7',
+                              background: isDebit ? '#FAD2D5' : '#D1F2EB',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -519,7 +519,7 @@ export default function Dashboard() {
                             <p
                               style={{
                                 fontWeight: 700,
-                                color: '#1d0730',
+                                color: '#0A2540',
                                 fontSize: '0.85rem',
                                 margin: '0 0 0.1rem',
                                 overflow: 'hidden',
@@ -531,7 +531,7 @@ export default function Dashboard() {
                             </p>
                             <p
                               style={{
-                                color: '#aaa',
+                                color: '#A0AAB5',
                                 fontSize: '0.75rem',
                                 margin: 0
                               }}
@@ -543,7 +543,7 @@ export default function Dashboard() {
                             style={{
                               fontWeight: 800,
                               fontSize: '0.9rem',
-                              color: isDebit ? '#dc2626' : '#16a34a',
+                              color: isDebit ? '#E63946' : '#0D8A6B',
                               margin: 0,
                               flexShrink: 0
                             }}

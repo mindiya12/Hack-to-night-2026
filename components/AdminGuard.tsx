@@ -30,7 +30,7 @@ export default function AdminGuard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#1d0730',
+          background: '#0A2540',
           color: 'white',
           fontSize: '1rem'
         }}

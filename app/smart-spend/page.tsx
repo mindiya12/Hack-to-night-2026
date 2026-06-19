@@ -66,9 +66,9 @@ export default function SmartSpend() {
     <RouteGuard>
       <div className="min-h-screen bg-bg-light font-geist p-0 flex">
         <Sidebar />
-        <main className="flex-1 p-6 md:p-12 text-black min-w-0 overflow-x-hidden bg-[#f8f9fa]">
+        <main className="flex-1 p-6 md:p-12 text-black min-w-0 overflow-x-hidden bg-[#FFFFFF]">
           <div className="mb-10 flex items-center justify-between">
-            <h2 className="text-3xl font-bold text-[#1d0730]">
+            <h2 className="text-3xl font-bold text-[#0A2540]">
               Smart Spend Analytics
             </h2>
             <div className="flex items-center gap-4">
@@ -121,7 +121,7 @@ export default function SmartSpend() {
                 </div>
 
                 <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                  <h3 className="text-xl font-bold mb-6 text-[#1d0730]">
+                  <h3 className="text-xl font-bold mb-6 text-[#0A2540]">
                     Spending by Category
                   </h3>
                   <div className="space-y-6">
@@ -136,7 +136,7 @@ export default function SmartSpend() {
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-3">
                             <div
-                              className="bg-[#9a5c97] h-3 rounded-full transition-all duration-1000"
+                              className="bg-[#00D4AA] h-3 rounded-full transition-all duration-1000"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -147,7 +147,7 @@ export default function SmartSpend() {
                 </div>
               </div>
 
-              <div className="bg-[#1d0730] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+              <div className="bg-[#0A2540] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-20 text-6xl">
                   💡
                 </div>

@@ -18,7 +18,7 @@ function Toast({
         top: '1.5rem',
         right: '1.5rem',
         zIndex: 100,
-        background: type === 'success' ? '#16a34a' : '#dc2626',
+        background: type === 'success' ? '#0D8A6B' : '#E63946',
         color: 'white',
         padding: '0.75rem 1.25rem',
         borderRadius: 12,
@@ -141,7 +141,7 @@ export default function TransactionsPage() {
           marginBottom: '1.5rem'
         }}
       >
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1d0730' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0A2540' }}>
           Transaction Monitor
         </h1>
         <label
@@ -152,7 +152,7 @@ export default function TransactionsPage() {
             cursor: 'pointer',
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#555'
+            color: '#4F5D75'
           }}
         >
           <input
@@ -174,11 +174,15 @@ export default function TransactionsPage() {
         }}
       >
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#aaa' }}>
+          <div
+            style={{ padding: '3rem', textAlign: 'center', color: '#A0AAB5' }}
+          >
             Loading…
           </div>
         ) : transactions.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#bbb' }}>
+          <div
+            style={{ padding: '3rem', textAlign: 'center', color: '#A0AAB5' }}
+          >
             No transactions found.
           </div>
         ) : (
@@ -188,7 +192,7 @@ export default function TransactionsPage() {
             <thead>
               <tr
                 style={{
-                  background: '#faf0fa',
+                  background: '#F6F9FC',
                   borderBottom: '2px solid #f3e8f3'
                 }}
               >
@@ -209,7 +213,7 @@ export default function TransactionsPage() {
                       textAlign: 'left',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      color: '#666',
+                      color: '#4F5D75',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
                       whiteSpace: 'nowrap'
@@ -232,7 +236,7 @@ export default function TransactionsPage() {
                   <td
                     style={{
                       padding: '0.8rem 0.9rem',
-                      color: '#aaa',
+                      color: '#A0AAB5',
                       fontSize: '0.75rem'
                     }}
                   >
@@ -262,7 +266,7 @@ export default function TransactionsPage() {
                     style={{
                       padding: '0.8rem 0.9rem',
                       fontWeight: 700,
-                      color: '#450043',
+                      color: '#0A2540',
                       fontSize: '0.875rem',
                       whiteSpace: 'nowrap'
                     }}
@@ -273,7 +277,7 @@ export default function TransactionsPage() {
                     style={{
                       padding: '0.8rem 0.9rem',
                       fontSize: '0.8rem',
-                      color: '#666',
+                      color: '#4F5D75',
                       maxWidth: 180
                     }}
                   >
@@ -288,7 +292,7 @@ export default function TransactionsPage() {
                       {t.description || '—'}
                     </span>
                     {t.flag_reason && (
-                      <span style={{ fontSize: '0.7rem', color: '#d97706' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#FFB800' }}>
                         ⚑ {t.flag_reason}
                       </span>
                     )}
@@ -297,7 +301,7 @@ export default function TransactionsPage() {
                     style={{
                       padding: '0.8rem 0.9rem',
                       fontSize: '0.75rem',
-                      color: '#888',
+                      color: '#4F5D75',
                       whiteSpace: 'nowrap'
                     }}
                   >
@@ -314,14 +318,14 @@ export default function TransactionsPage() {
                           t.status === 'REVERSED'
                             ? '#f3f4f6'
                             : t.flagged
-                              ? '#fef3c7'
-                              : '#dcfce7',
+                              ? '#FFF4D6'
+                              : '#D1F2EB',
                         color:
                           t.status === 'REVERSED'
                             ? '#9ca3af'
                             : t.flagged
-                              ? '#d97706'
-                              : '#16a34a'
+                              ? '#FFB800'
+                              : '#0D8A6B'
                       }}
                     >
                       {t.flagged ? 'FLAGGED' : t.status}
@@ -344,7 +348,7 @@ export default function TransactionsPage() {
                               borderRadius: 6,
                               border: 'none',
                               background: '#f3f4f6',
-                              color: '#666',
+                              color: '#4F5D75',
                               fontSize: '0.72rem',
                               fontWeight: 600,
                               cursor: 'pointer'
@@ -362,8 +366,8 @@ export default function TransactionsPage() {
                               padding: '0.25rem 0.6rem',
                               borderRadius: 6,
                               border: 'none',
-                              background: '#fef3c7',
-                              color: '#d97706',
+                              background: '#FFF4D6',
+                              color: '#FFB800',
                               fontSize: '0.72rem',
                               fontWeight: 600,
                               cursor: 'pointer'
@@ -383,8 +387,8 @@ export default function TransactionsPage() {
                                 padding: '0.25rem 0.6rem',
                                 borderRadius: 6,
                                 border: 'none',
-                                background: '#fee2e2',
-                                color: '#dc2626',
+                                background: '#FAD2D5',
+                                color: '#E63946',
                                 fontSize: '0.72rem',
                                 fontWeight: 600,
                                 cursor: 'pointer'
@@ -430,7 +434,7 @@ export default function TransactionsPage() {
             <h2
               style={{
                 fontWeight: 800,
-                color: '#1d0730',
+                color: '#0A2540',
                 marginBottom: '0.5rem',
                 fontSize: '1.1rem'
               }}
@@ -441,7 +445,7 @@ export default function TransactionsPage() {
             </h2>
             <p
               style={{
-                color: '#888',
+                color: '#4F5D75',
                 fontSize: '0.8rem',
                 marginBottom: '1rem'
               }}
@@ -452,7 +456,7 @@ export default function TransactionsPage() {
             {modal.action === 'reverse' && (
               <p
                 style={{
-                  background: '#fef3c7',
+                  background: '#FFF4D6',
                   color: '#92400e',
                   padding: '0.6rem 0.9rem',
                   borderRadius: 8,
@@ -469,7 +473,7 @@ export default function TransactionsPage() {
                 display: 'block',
                 fontWeight: 600,
                 fontSize: '0.8rem',
-                color: '#555',
+                color: '#4F5D75',
                 marginBottom: '0.4rem'
               }}
             >
@@ -483,7 +487,7 @@ export default function TransactionsPage() {
                 width: '100%',
                 padding: '0.6rem',
                 borderRadius: 10,
-                border: '1.5px solid #e5e7eb',
+                border: '1.5px solid #E3E8EE',
                 fontSize: '0.875rem',
                 outline: 'none',
                 resize: 'none',
@@ -504,7 +508,7 @@ export default function TransactionsPage() {
                 style={{
                   padding: '0.6rem 1.25rem',
                   borderRadius: 10,
-                  border: '1.5px solid #e5e7eb',
+                  border: '1.5px solid #E3E8EE',
                   background: 'white',
                   fontWeight: 600,
                   cursor: 'pointer'
@@ -522,7 +526,7 @@ export default function TransactionsPage() {
                   fontWeight: 700,
                   cursor: 'pointer',
                   opacity: submitting || !reason.trim() ? 0.6 : 1,
-                  background: modal.action === 'flag' ? '#d97706' : '#dc2626',
+                  background: modal.action === 'flag' ? '#FFB800' : '#E63946',
                   color: 'white'
                 }}
               >

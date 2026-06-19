@@ -134,7 +134,7 @@ export default function EStatementPage() {
             ) : (
               <section
                 aria-label="Bank statement preview"
-                className="mt-6 min-h-[560px] bg-[#e7e7e7] px-7 py-9 text-black print:bg-white print:p-0"
+                className="mt-6 min-h-[560px] bg-[#F6F9FC] px-7 py-9 text-black print:bg-white print:p-0"
               >
                 <div className="max-w-full">
                   <img

@@ -28,11 +28,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.75rem 1rem',
   borderRadius: 12,
-  border: '1.5px solid #e8e0e8',
+  border: '1.5px solid #E3E8EE',
   fontSize: '0.95rem',
   outline: 'none',
   background: 'white',
-  color: '#1d0730',
+  color: '#0A2540',
   boxSizing: 'border-box'
 }
 
@@ -51,7 +51,7 @@ function Field({
         style={{
           fontSize: '0.8rem',
           fontWeight: 700,
-          color: '#555',
+          color: '#4F5D75',
           textTransform: 'uppercase',
           letterSpacing: '0.5px'
         }}
@@ -61,7 +61,7 @@ function Field({
       {children}
       {error && (
         <span
-          style={{ color: '#dc2626', fontSize: '0.78rem', fontWeight: 600 }}
+          style={{ color: '#E63946', fontSize: '0.78rem', fontWeight: 600 }}
         >
           {error}
         </span>
@@ -205,7 +205,7 @@ export default function PayBillsPage() {
   return (
     <RouteGuard>
       <div
-        style={{ display: 'flex', minHeight: '100vh', background: '#f5f0f7' }}
+        style={{ display: 'flex', minHeight: '100vh', background: '#F6F9FC' }}
       >
         <Sidebar />
         <main
@@ -215,7 +215,7 @@ export default function PayBillsPage() {
             style={{
               fontSize: '1.75rem',
               fontWeight: 800,
-              color: '#1d0730',
+              color: '#0A2540',
               marginBottom: '1.5rem'
             }}
           >
@@ -230,12 +230,12 @@ export default function PayBillsPage() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '1.5rem',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <p
                   style={{
-                    color: '#888',
+                    color: '#4F5D75',
                     fontSize: '0.875rem',
                     marginBottom: '1.25rem',
                     marginTop: 0
@@ -264,7 +264,7 @@ export default function PayBillsPage() {
                         gap: '0.5rem',
                         padding: '0.85rem 0.5rem',
                         borderRadius: 16,
-                        border: '1.5px solid #f0e8f0',
+                        border: '1.5px solid #E3E8EE',
                         background: 'white',
                         cursor: 'pointer',
                         transition: 'all 0.2s'
@@ -272,15 +272,15 @@ export default function PayBillsPage() {
                       onMouseOver={(e) => {
                         ;(
                           e.currentTarget as HTMLButtonElement
-                        ).style.borderColor = '#9a5c97'
+                        ).style.borderColor = '#00D4AA'
                         ;(
                           e.currentTarget as HTMLButtonElement
-                        ).style.background = '#faf0fa'
+                        ).style.background = '#F6F9FC'
                       }}
                       onMouseOut={(e) => {
                         ;(
                           e.currentTarget as HTMLButtonElement
-                        ).style.borderColor = '#f0e8f0'
+                        ).style.borderColor = '#E3E8EE'
                         ;(
                           e.currentTarget as HTMLButtonElement
                         ).style.background = 'white'
@@ -291,7 +291,7 @@ export default function PayBillsPage() {
                           width: 44,
                           height: 44,
                           borderRadius: 12,
-                          background: '#f9f0f9',
+                          background: '#F6F9FC',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -310,7 +310,7 @@ export default function PayBillsPage() {
                         style={{
                           fontSize: '0.7rem',
                           fontWeight: 600,
-                          color: '#1d0730',
+                          color: '#0A2540',
                           textAlign: 'center',
                           lineHeight: 1.3
                         }}
@@ -330,7 +330,7 @@ export default function PayBillsPage() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '2rem',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <button
@@ -338,7 +338,7 @@ export default function PayBillsPage() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#888',
+                    color: '#4F5D75',
                     fontSize: '0.85rem',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -365,7 +365,7 @@ export default function PayBillsPage() {
                       width: 48,
                       height: 48,
                       borderRadius: 12,
-                      background: '#f9f0f9',
+                      background: '#F6F9FC',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -385,7 +385,7 @@ export default function PayBillsPage() {
                     <p
                       style={{
                         fontWeight: 800,
-                        color: '#1d0730',
+                        color: '#0A2540',
                         fontSize: '1.05rem',
                         margin: 0
                       }}
@@ -394,7 +394,7 @@ export default function PayBillsPage() {
                     </p>
                     <p
                       style={{
-                        color: '#9a5c97',
+                        color: '#00D4AA',
                         fontSize: '0.8rem',
                         margin: 0
                       }}
@@ -470,7 +470,7 @@ export default function PayBillsPage() {
                 {error && (
                   <p
                     style={{
-                      color: '#dc2626',
+                      color: '#E63946',
                       fontSize: '0.875rem',
                       fontWeight: 600,
                       marginTop: '0.75rem'
@@ -489,7 +489,7 @@ export default function PayBillsPage() {
                     padding: '0.85rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#450043',
+                    background: '#0A2540',
                     color: 'white',
                     fontWeight: 700,
                     fontSize: '1rem',
@@ -509,13 +509,13 @@ export default function PayBillsPage() {
                   background: 'white',
                   borderRadius: 24,
                   padding: '2rem',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 {/* Payment Summary */}
                 <div
                   style={{
-                    background: '#f9f0f9',
+                    background: '#F6F9FC',
                     borderRadius: 16,
                     padding: '1.25rem',
                     marginBottom: '1.5rem'
@@ -525,7 +525,7 @@ export default function PayBillsPage() {
                     style={{
                       margin: '0 0 0.75rem',
                       fontWeight: 700,
-                      color: '#1d0730',
+                      color: '#0A2540',
                       fontSize: '0.9rem'
                     }}
                   >
@@ -556,13 +556,13 @@ export default function PayBillsPage() {
                           fontSize: '0.875rem'
                         }}
                       >
-                        <span style={{ color: '#888', flexShrink: 0 }}>
+                        <span style={{ color: '#4F5D75', flexShrink: 0 }}>
                           {k}
                         </span>
                         <span
                           style={{
                             fontWeight: 600,
-                            color: '#1d0730',
+                            color: '#0A2540',
                             textAlign: 'right',
                             marginLeft: '1rem',
                             wordBreak: 'break-word'
@@ -579,7 +579,7 @@ export default function PayBillsPage() {
                 <div style={{ textAlign: 'center' }}>
                   <p
                     style={{
-                      color: '#555',
+                      color: '#4F5D75',
                       fontSize: '0.9rem',
                       marginBottom: '0.25rem'
                     }}
@@ -588,7 +588,7 @@ export default function PayBillsPage() {
                   </p>
                   <p
                     style={{
-                      color: '#450043',
+                      color: '#0A2540',
                       fontWeight: 700,
                       fontSize: '0.95rem',
                       marginBottom: '1.25rem'
@@ -614,14 +614,14 @@ export default function PayBillsPage() {
                         fontWeight: 800,
                         letterSpacing: '0.5rem',
                         padding: '0.75rem',
-                        color: '#450043'
+                        color: '#0A2540'
                       }}
                     />
 
                     {error && (
                       <p
                         style={{
-                          color: '#dc2626',
+                          color: '#E63946',
                           fontSize: '0.875rem',
                           fontWeight: 600,
                           marginTop: '0.75rem'
@@ -640,7 +640,7 @@ export default function PayBillsPage() {
                         padding: '0.85rem',
                         borderRadius: 999,
                         border: 'none',
-                        background: '#450043',
+                        background: '#0A2540',
                         color: 'white',
                         fontWeight: 700,
                         fontSize: '1rem',
@@ -669,7 +669,7 @@ export default function PayBillsPage() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#888',
+                        color: '#4F5D75',
                         fontSize: '0.85rem',
                         cursor: 'pointer',
                         fontWeight: 600
@@ -683,7 +683,7 @@ export default function PayBillsPage() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#450043',
+                        color: '#0A2540',
                         fontSize: '0.85rem',
                         cursor: 'pointer',
                         fontWeight: 600,
@@ -705,7 +705,7 @@ export default function PayBillsPage() {
                   borderRadius: 24,
                   padding: '3rem 2rem',
                   textAlign: 'center',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <div
@@ -713,7 +713,7 @@ export default function PayBillsPage() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#dcfce7',
+                    background: '#D1F2EB',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -726,7 +726,7 @@ export default function PayBillsPage() {
                 <h2
                   style={{
                     fontWeight: 800,
-                    color: '#166534',
+                    color: '#0D8A6B',
                     margin: '0 0 0.5rem'
                   }}
                 >
@@ -734,7 +734,7 @@ export default function PayBillsPage() {
                 </h2>
                 <p
                   style={{
-                    color: '#888',
+                    color: '#4F5D75',
                     fontSize: '0.875rem',
                     margin: '0 0 1.5rem'
                   }}
@@ -747,7 +747,7 @@ export default function PayBillsPage() {
                     padding: '0.75rem 2rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#450043',
+                    background: '#0A2540',
                     color: 'white',
                     fontWeight: 700,
                     cursor: 'pointer'
@@ -766,7 +766,7 @@ export default function PayBillsPage() {
                   borderRadius: 24,
                   padding: '3rem 2rem',
                   textAlign: 'center',
-                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                  boxShadow: '0 2px 16px rgba(10,37,64,0.07)'
                 }}
               >
                 <div
@@ -774,7 +774,7 @@ export default function PayBillsPage() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#fee2e2',
+                    background: '#FAD2D5',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -787,7 +787,7 @@ export default function PayBillsPage() {
                 <h2
                   style={{
                     fontWeight: 800,
-                    color: '#991b1b',
+                    color: '#E63946',
                     margin: '0 0 0.5rem'
                   }}
                 >
@@ -795,7 +795,7 @@ export default function PayBillsPage() {
                 </h2>
                 <p
                   style={{
-                    color: '#666',
+                    color: '#4F5D75',
                     fontSize: '0.9rem',
                     margin: '0 0 1.5rem'
                   }}
@@ -808,7 +808,7 @@ export default function PayBillsPage() {
                     padding: '0.75rem 2rem',
                     borderRadius: 999,
                     border: 'none',
-                    background: '#dc2626',
+                    background: '#E63946',
                     color: 'white',
                     fontWeight: 700,
                     cursor: 'pointer'

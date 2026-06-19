@@ -26,7 +26,7 @@ function MetricCard({
     >
       <p
         style={{
-          color: '#888',
+          color: '#4F5D75',
           fontSize: '0.8rem',
           fontWeight: 600,
           textTransform: 'uppercase',
@@ -40,14 +40,16 @@ function MetricCard({
         style={{
           fontSize: '2rem',
           fontWeight: 800,
-          color: '#1d0730',
+          color: '#0A2540',
           lineHeight: 1
         }}
       >
         {value}
       </p>
       {sub && (
-        <p style={{ color: '#aaa', fontSize: '0.75rem', marginTop: '0.4rem' }}>
+        <p
+          style={{ color: '#A0AAB5', fontSize: '0.75rem', marginTop: '0.4rem' }}
+        >
           {sub}
         </p>
       )}
@@ -84,13 +86,13 @@ export default function AdminDashboard() {
       >
         <div>
           <h1
-            style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1d0730' }}
+            style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0A2540' }}
           >
             Admin Dashboard
           </h1>
           <p
             style={{
-              color: '#888',
+              color: '#4F5D75',
               fontSize: '0.875rem',
               marginTop: '0.25rem'
             }}
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
       </div>
 
       {loading ? (
-        <p style={{ color: '#888' }}>Loading metrics…</p>
+        <p style={{ color: '#4F5D75' }}>Loading metrics…</p>
       ) : (
         <>
           <div
@@ -125,12 +127,12 @@ export default function AdminDashboard() {
             <MetricCard
               label="Total Customers"
               value={m?.totalCustomers ?? 0}
-              color="#450043"
+              color="#0A2540"
             />
             <MetricCard
               label="Deposits Held"
               value={`Rs. ${Number(m?.totalDeposits ?? 0).toLocaleString()}`}
-              color="#9a5c97"
+              color="#00D4AA"
               sub="Sum of all balances"
             />
             <MetricCard
@@ -184,7 +186,7 @@ export default function AdminDashboard() {
                 <h2
                   style={{
                     fontWeight: 700,
-                    color: '#1d0730',
+                    color: '#0A2540',
                     fontSize: '1rem'
                   }}
                 >
@@ -194,7 +196,7 @@ export default function AdminDashboard() {
                   onClick={() => router.push('/admin/transactions')}
                   style={{
                     fontSize: '0.75rem',
-                    color: '#9a5c97',
+                    color: '#00D4AA',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -212,7 +214,7 @@ export default function AdminDashboard() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.6rem 0',
-                    borderBottom: '1px solid #f3f0f6'
+                    borderBottom: '1px solid #F6F9FC'
                   }}
                 >
                   <div>
@@ -233,7 +235,7 @@ export default function AdminDashboard() {
                     <p
                       style={{
                         fontWeight: 700,
-                        color: '#450043',
+                        color: '#0A2540',
                         fontSize: '0.875rem'
                       }}
                     >
@@ -244,7 +246,7 @@ export default function AdminDashboard() {
                         style={{
                           fontSize: '0.65rem',
                           background: '#fef2f2',
-                          color: '#dc2626',
+                          color: '#E63946',
                           padding: '1px 6px',
                           borderRadius: 4,
                           fontWeight: 600
@@ -257,7 +259,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {!data?.recentTransactions?.length && (
-                <p style={{ color: '#bbb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#A0AAB5', fontSize: '0.875rem' }}>
                   No transactions yet.
                 </p>
               )}
@@ -283,7 +285,7 @@ export default function AdminDashboard() {
                 <h2
                   style={{
                     fontWeight: 700,
-                    color: '#1d0730',
+                    color: '#0A2540',
                     fontSize: '1rem'
                   }}
                 >
@@ -293,7 +295,7 @@ export default function AdminDashboard() {
                   onClick={() => router.push('/admin/applications')}
                   style={{
                     fontSize: '0.75rem',
-                    color: '#9a5c97',
+                    color: '#00D4AA',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -311,7 +313,7 @@ export default function AdminDashboard() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.6rem 0',
-                    borderBottom: '1px solid #f3f0f6'
+                    borderBottom: '1px solid #F6F9FC'
                   }}
                 >
                   <div>
@@ -336,16 +338,16 @@ export default function AdminDashboard() {
                       fontWeight: 700,
                       background:
                         a.status === 'pending'
-                          ? '#fef3c7'
+                          ? '#FFF4D6'
                           : a.status === 'approved'
-                            ? '#dcfce7'
+                            ? '#D1F2EB'
                             : '#fef2f2',
                       color:
                         a.status === 'pending'
-                          ? '#d97706'
+                          ? '#FFB800'
                           : a.status === 'approved'
-                            ? '#16a34a'
-                            : '#dc2626'
+                            ? '#0D8A6B'
+                            : '#E63946'
                     }}
                   >
                     {a.status.toUpperCase()}
@@ -353,7 +355,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {!data?.recentApplications?.length && (
-                <p style={{ color: '#bbb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#A0AAB5', fontSize: '0.875rem' }}>
                   No applications yet.
                 </p>
               )}
