@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Bai_Jamjuree } from 'next/font/google'
 import './globals.css'
+import Chatbot from '@/components/Chatbot'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,7 +34,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${bai.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Chatbot />
+      </body>
     </html>
   )
 }
