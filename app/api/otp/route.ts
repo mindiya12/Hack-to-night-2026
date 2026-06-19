@@ -1,7 +1,7 @@
-import { asText, query, serviceFailure } from '@/lib/platform-db'
-import { getSessionUserId } from '@/lib/session'
 import { sendOTPEmail } from '@/lib/email'
+import { asText, query, serviceFailure } from '@/lib/platform-db'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { getSessionUserId } from '@/lib/session'
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()

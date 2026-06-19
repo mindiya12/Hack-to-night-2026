@@ -1,7 +1,7 @@
 import {
   asText,
-  pool,
   ensureDatabase,
+  pool,
   query,
   serviceFailure
 } from '@/lib/platform-db'

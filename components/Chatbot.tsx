@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 

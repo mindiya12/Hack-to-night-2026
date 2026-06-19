@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Sidebar from '@/components/sidebar'
+import { useEffect, useState } from 'react'
 import RouteGuard from '@/components/RouteGuard'
+import Sidebar from '@/components/sidebar'
 
 export default function SmartSpend() {
   const [accounts, setAccounts] = useState<any[]>([])

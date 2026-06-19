@@ -27,7 +27,7 @@ export function clearSession() {
   }
 }
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 let hydrated = false
 

@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { clearSession } from '@/lib/auth'
 import type { ReactElement } from 'react'
+import { clearSession } from '@/lib/auth'
 
 type IconProps = { size?: number }
 

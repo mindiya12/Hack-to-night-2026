@@ -1,5 +1,5 @@
-import { asText, query, serviceFailure } from '@/lib/platform-db'
 import bcrypt from 'bcryptjs'
+import { asText, query, serviceFailure } from '@/lib/platform-db'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {

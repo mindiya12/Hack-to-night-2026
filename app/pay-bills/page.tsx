@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Sidebar from '@/components/sidebar'
+import { useEffect, useState } from 'react'
 import RouteGuard from '@/components/RouteGuard'
+import Sidebar from '@/components/sidebar'
 
 type Screen = 'select' | 'form' | 'otp' | 'success' | 'failed'
 

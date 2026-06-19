@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import RouteGuard from '@/components/RouteGuard'
 import Sidebar from '@/components/sidebar'
 import { getSession } from '@/lib/auth'
-import RouteGuard from '@/components/RouteGuard'
 
 export default function EStatementPage() {
   const [accounts, setAccounts] = useState<any[]>([])

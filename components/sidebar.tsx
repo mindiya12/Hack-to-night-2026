@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { clearSession, getSession } from '@/lib/auth'
 import { useEffect, useState } from 'react'
+import { clearSession, getSession } from '@/lib/auth'
 
 // Minimal icon components to avoid external dependency
 type IconProps = { size?: number }

@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Sidebar from '../../components/sidebar'
-import { getSession, SessionUser, useHydrated } from '@/lib/auth'
+import { useEffect, useState } from 'react'
 import RouteGuard from '@/components/RouteGuard'
+import { getSession, SessionUser, useHydrated } from '@/lib/auth'
+import Sidebar from '../../components/sidebar'
 
 function greeting() {
   const h = new Date().getHours()

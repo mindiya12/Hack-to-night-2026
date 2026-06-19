@@ -1,7 +1,7 @@
 'use client'
 
-import AdminSidebar from '@/components/AdminSidebar'
 import AdminGuard from '@/components/AdminGuard'
+import AdminSidebar from '@/components/AdminSidebar'
 
 export default function AdminLayout({
   children

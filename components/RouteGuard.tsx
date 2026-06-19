@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { getSession, useHydrated } from '@/lib/auth'
 
 export default function RouteGuard({
