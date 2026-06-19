@@ -66,7 +66,7 @@ export default function SmartSpend() {
     <RouteGuard>
       <div className="min-h-screen bg-bg-light font-geist p-0 flex">
         <Sidebar />
-        <main className="flex-1 p-12 text-black w-full bg-[#f8f9fa]">
+        <main className="flex-1 p-6 md:p-12 text-black min-w-0 overflow-x-hidden bg-[#f8f9fa]">
           <div className="mb-10 flex items-center justify-between">
             <h2 className="text-3xl font-bold text-[#1d0730]">
               Smart Spend Analytics
@@ -106,7 +106,7 @@ export default function SmartSpend() {
                     <p className="text-gray-500 font-medium mb-2">
                       Total Spent
                     </p>
-                    <h3 className="text-4xl font-bold text-red-600">
+                    <h3 className="text-2xl lg:text-4xl font-bold text-red-600 break-all">
                       Rs. {totalSpent.toLocaleString()}
                     </h3>
                   </div>
@@ -114,7 +114,7 @@ export default function SmartSpend() {
                     <p className="text-gray-500 font-medium mb-2">
                       Total Received
                     </p>
-                    <h3 className="text-4xl font-bold text-green-600">
+                    <h3 className="text-2xl lg:text-4xl font-bold text-green-600 break-all">
                       Rs. {totalReceived.toLocaleString()}
                     </h3>
                   </div>

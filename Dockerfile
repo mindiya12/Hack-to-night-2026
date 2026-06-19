@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "find .next -mindepth 1 -delete 2>/dev/null || true; npm run dev"]

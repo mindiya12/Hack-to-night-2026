@@ -1,8 +1,17 @@
 import { asText, query, serviceFailure } from '@/lib/platform-db'
 import bcrypt from 'bcryptjs'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1'
+    if (!checkRateLimit(`signup:${ip}`, 5, 3_600_000)) {
+      return Response.json(
+        { ok: false, message: 'Too many sign-up attempts. Try again later.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json().catch(() => ({}))
     const username = asText(body.username)
     const password = asText(body.password)

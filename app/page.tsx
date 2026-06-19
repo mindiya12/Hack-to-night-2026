@@ -13,6 +13,7 @@ export default function Home() {
             width={48}
             height={48}
             className="rounded-full"
+            style={{ width: 'auto', height: 'auto' }}
           />
           <h1 className="text-2xl font-bold tracking-tight text-[#1d0730]">
             Nova Bank

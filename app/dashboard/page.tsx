@@ -3,522 +3,564 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '../../components/sidebar'
-import { Bell, ChevronRight, Search } from '../../components/Icons'
-import { getSession, SessionUser } from '@/lib/auth'
+import { getSession, SessionUser, useHydrated } from '@/lib/auth'
+import RouteGuard from '@/components/RouteGuard'
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function QuickAction({
+  icon,
+  label,
+  href
+}: {
+  icon: string
+  label: string
+  href: string
+}) {
+  const router = useRouter()
+  return (
+    <button
+      onClick={() => router.push(href)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '1rem 0.75rem',
+        borderRadius: 20,
+        border: '1.5px solid #ede5ed',
+        background: 'white',
+        cursor: 'pointer',
+        flex: 1,
+        minWidth: 80,
+        transition: 'all 0.2s'
+      }}
+      onMouseOver={(e) => {
+        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#9a5c97'
+        ;(e.currentTarget as HTMLButtonElement).style.background = '#faf0fa'
+      }}
+      onMouseOut={(e) => {
+        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#ede5ed'
+        ;(e.currentTarget as HTMLButtonElement).style.background = 'white'
+      }}
+    >
+      <span style={{ fontSize: '1.6rem' }}>{icon}</span>
+      <span
+        style={{
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          color: '#1d0730',
+          textAlign: 'center',
+          lineHeight: 1.3
+        }}
+      >
+        {label}
+      </span>
+    </button>
+  )
+}
 
 export default function Dashboard() {
   const router = useRouter()
-  const [user, setUser] = useState<SessionUser | null>(null)
+  const isHydrated = useHydrated()
+  const user = typeof window !== 'undefined' ? getSession() : null
   const [accounts, setAccounts] = useState<any[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedAccountIdx, setSelectedAccountIdx] = useState(0)
 
   useEffect(() => {
-    const session = getSession()
-    if (!session) {
-      router.replace('/login')
-      return
-    }
-    setUser(session)
+    if (!isHydrated || !user) return
 
-    Promise.all([
-      fetch('/api/accounts').then((r) => r.json()),
-      fetch('/api/transactions?limit=5').then((r) => r.json()) // fetches for first account by default if not passed, wait! Let's just fetch recent overall or per account.
-    ])
-      .then(([accRes, txRes]) => {
-        if (accRes.ok) {
+    fetch('/api/accounts')
+      .then((r) => r.json())
+      .then((accRes) => {
+        if (accRes.ok && accRes.accounts?.length) {
           setAccounts(accRes.accounts)
-          // If they have an account, fetch txns for it
-          if (accRes.accounts.length > 0) {
-            fetch(
-              `/api/transactions?account=${accRes.accounts[0].account_number}&limit=5`
-            )
-              .then((r) => r.json())
-              .then((t) => {
-                if (t.ok) setTransactions(t.transactions)
-                setLoading(false)
-              })
-          } else {
-            setLoading(false)
-          }
-        } else {
-          setLoading(false)
+          return fetch(
+            `/api/transactions?account=${accRes.accounts[0].account_number}&limit=6`
+          )
+            .then((r) => r.json())
+            .then((t) => {
+              if (t.ok) setTransactions(t.transactions)
+            })
         }
       })
-      .catch(() => setLoading(false))
-  }, [router])
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [user, isHydrated])
 
-  if (!user) return null
+  const totalBalance = accounts.reduce(
+    (s, a) => s + parseFloat(a.balance || '0'),
+    0
+  )
+  const selectedAccount = accounts[selectedAccountIdx]
 
-  const mainAccount = accounts[0]
+  function loadTransactions(acc: any) {
+    fetch(`/api/transactions?account=${acc.account_number}&limit=6`)
+      .then((r) => r.json())
+      .then((t) => {
+        if (t.ok) setTransactions(t.transactions)
+      })
+      .catch(() => {})
+  }
+
+  function switchAccount(i: number) {
+    setSelectedAccountIdx(i)
+    loadTransactions(accounts[i])
+  }
+
+  if (!isHydrated || !user) return null
 
   return (
-    <main className="dashboard">
-      <Sidebar />
-
-      <section className="content">
-        {/* Header */}
-        <header className="content-header">
-          <h1 className="page-title">Dashboard</h1>
-          <div className="header-actions">
-            <Search size={24} />
-            <Bell size={24} />
-            <img src="/person-logo.png" alt="profile" className="avatar" />
-          </div>
-        </header>
-
-        {loading ? (
-          <div className="mt-8">Loading dashboard data...</div>
-        ) : (
-          <>
-            {/* Top Section */}
-            <div className="top-section">
-              <div className="welcome-card">
-                <h2 className="welcome-title">
-                  Welcome back, {user.full_name.split(' ')[0]}!
-                </h2>
-                <div className="balance-card">
-                  <p className="balance-label">Current Balance</p>
-                  <p className="balance-amount">
-                    Rs.{' '}
-                    {mainAccount
-                      ? Number(mainAccount.balance).toLocaleString()
-                      : '0'}
-                  </p>
-                  <ChevronRight className="balance-chevron" size={30} />
-                </div>
-                <div className="carousel-dots">
-                  {accounts.map((_, i) => (
-                    <span
-                      key={i}
-                      className={`dot ${i === 0 ? 'active' : ''}`}
-                    />
-                  ))}
-                </div>
-                <img
-                  src="/dashboard-logo.png"
-                  alt="woman"
-                  className="welcome-image"
-                />
-              </div>
-
-              <div className="payees-card">
-                <h3 className="payees-title">Saved Payees</h3>
-                <div className="payees-list">
-                  {/* Just some dummy payees for UI demo since we don't have a payee table */}
-                  {[1, 2].map((item) => (
-                    <div key={item} className="payee-item">
-                      <img
-                        src="/person-logo.png"
-                        alt="user"
-                        className="avatar"
-                      />
-                      <div className="payee-info">
-                        <p>HKDS</p>
-                        <p>Wickramanayake</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="view-all">
-                  View all
-                  <ChevronRight size={15} />
-                </div>
-              </div>
+    <RouteGuard>
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '100vh',
+          background: '#f5f0f7',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}
+      >
+        <Sidebar />
+        <main
+          style={{
+            flex: 1,
+            padding: '1.75rem 2rem',
+            overflowY: 'auto',
+            minWidth: 0
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.75rem',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  color: '#9a5c97',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  margin: 0
+                }}
+              >
+                {greeting()}
+              </p>
+              <h1
+                style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 900,
+                  color: '#1d0730',
+                  margin: '0.2rem 0 0'
+                }}
+              >
+                {user.full_name.split(' ')[0]} 👋
+              </h1>
             </div>
+            <img
+              src="/person-logo.png"
+              alt="profile"
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '3px solid #e8d0e8'
+              }}
+            />
+          </div>
 
-            {/* Transactions */}
-            <div className="transactions-section">
-              <h2 className="transactions-title">Recent Transactions</h2>
-              <div className="transactions-card">
-                {transactions.length === 0 ? (
-                  <div className="text-gray-500">No recent transactions.</div>
-                ) : (
-                  transactions.map((t, index) => {
-                    const isDebit =
-                      t.from_account === mainAccount?.account_number
-                    const amountPrefix = isDebit ? '-' : '+'
-                    const amountColor = isDebit
-                      ? 'text-red-600'
-                      : 'text-green-600'
-                    const dateStr = new Date(t.created_at).toLocaleDateString(
-                      'en-US',
-                      { month: 'short', day: 'numeric', year: 'numeric' }
-                    )
+          {loading ? (
+            <div
+              style={{
+                color: '#9a5c97',
+                fontSize: '0.9rem',
+                padding: '2rem 0'
+              }}
+            >
+              Loading your dashboard…
+            </div>
+          ) : (
+            <>
+              {/* Hero Balance Card */}
+              <div
+                style={{
+                  background:
+                    'linear-gradient(135deg, #1d0730 0%, #450043 55%, #6b2568 100%)',
+                  borderRadius: 28,
+                  padding: '2rem',
+                  color: 'white',
+                  marginBottom: '1.5rem',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: -30,
+                    top: -30,
+                    width: 180,
+                    height: 180,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)'
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: 40,
+                    bottom: -50,
+                    width: 140,
+                    height: 140,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.04)'
+                  }}
+                />
+                <p
+                  style={{
+                    color: 'rgba(255,255,255,0.65)',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    margin: '0 0 0.5rem'
+                  }}
+                >
+                  Total Portfolio Balance
+                </p>
+                <p
+                  style={{
+                    fontSize: '2.5rem',
+                    fontWeight: 900,
+                    margin: '0 0 1.25rem',
+                    letterSpacing: '-1px'
+                  }}
+                >
+                  Rs.{' '}
+                  {totalBalance.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </p>
 
-                    return (
-                      <div key={index} className="transaction-item">
-                        <img
-                          src="/person-logo.png"
-                          alt="user"
-                          className="avatar"
-                        />
-                        <span className="transaction-date">{dateStr}</span>
-                        <span className="transaction-account">
-                          {isDebit ? t.to_account : t.from_account}
-                        </span>
-                        <span
-                          className={`transaction-amount font-medium ${amountColor}`}
-                        >
-                          {amountPrefix}Rs. {Number(t.amount).toLocaleString()}
-                        </span>
-                        <span className="transaction-status">
-                          {t.status || 'Success'}
-                        </span>
-                      </div>
-                    )
-                  })
-                )}
-                {transactions.length > 0 && (
+                {/* Account Tabs */}
+                {accounts.length > 0 && (
                   <div
-                    className="view-all cursor-pointer"
-                    onClick={() => router.push('/e-statement')}
+                    style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
                   >
-                    View all
-                    <ChevronRight size={15} />
+                    {accounts.map((a, i) => (
+                      <button
+                        key={a.account_number}
+                        onClick={() => switchAccount(i)}
+                        style={{
+                          padding: '0.4rem 0.9rem',
+                          borderRadius: 999,
+                          border: `1.5px solid ${selectedAccountIdx === i ? 'white' : 'rgba(255,255,255,0.3)'}`,
+                          background:
+                            selectedAccountIdx === i
+                              ? 'rgba(255,255,255,0.18)'
+                              : 'transparent',
+                          color:
+                            selectedAccountIdx === i
+                              ? 'white'
+                              : 'rgba(255,255,255,0.6)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {a.account_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {selectedAccount && (
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.9rem 1.25rem',
+                      background: 'rgba(255,255,255,0.1)',
+                      borderRadius: 16,
+                      backdropFilter: 'blur(8px)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          color: 'rgba(255,255,255,0.6)',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 0.2rem'
+                        }}
+                      >
+                        {selectedAccount.account_type || 'Account'} ·{' '}
+                        {selectedAccount.account_number}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '1.3rem',
+                          fontWeight: 800,
+                          color: 'white',
+                          margin: 0
+                        }}
+                      >
+                        Rs.{' '}
+                        {Number(selectedAccount.balance).toLocaleString(
+                          undefined,
+                          { minimumFractionDigits: 2 }
+                        )}
+                      </p>
+                    </div>
+                    {selectedAccount.is_frozen && (
+                      <span
+                        style={{
+                          background: '#fee2e2',
+                          color: '#991b1b',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          padding: '0.3rem 0.75rem',
+                          borderRadius: 999,
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        FROZEN
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          </>
-        )}
-      </section>
 
-      <style jsx>{`
-        .dashboard {
-          width: 100vw;
-          min-height: 100vh;
-          background: #f1f1f1;
-          display: flex;
-          gap: 1.5rem;
-          overflow: hidden;
-          font-family: system-ui, -apple-system, sans-serif;
-        }
+              {/* Quick Actions */}
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '1.25rem',
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 2px 12px rgba(69,0,67,0.06)'
+                }}
+              >
+                <p
+                  style={{
+                    color: '#555',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    margin: '0 0 1rem'
+                  }}
+                >
+                  Quick Actions
+                </p>
+                <div
+                  style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}
+                >
+                  <QuickAction
+                    icon="💸"
+                    label="Transfer"
+                    href="/bank-transfer"
+                  />
+                  <QuickAction icon="📋" label="Pay Bills" href="/pay-bills" />
+                  <QuickAction
+                    icon="📊"
+                    label="Statement"
+                    href="/e-statement"
+                  />
+                  <QuickAction
+                    icon="🏦"
+                    label="Accounts"
+                    href="/bank-accounts"
+                  />
+                  <QuickAction
+                    icon="💡"
+                    label="Smart Spend"
+                    href="/smart-spend"
+                  />
+                </div>
+              </div>
 
-        .content {
-          flex: 1;
-          padding: 1.5rem 1.25rem;
-          overflow-y: auto;
-          min-width: 0;
-        }
+              {/* Recent Transactions */}
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '1.5rem',
+                  boxShadow: '0 2px 12px rgba(69,0,67,0.06)',
+                  overflowX: 'auto'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1.25rem',
+                    minWidth: 0
+                  }}
+                >
+                  <p
+                    style={{
+                      color: '#1d0730',
+                      fontWeight: 800,
+                      fontSize: '1rem',
+                      margin: 0
+                    }}
+                  >
+                    Recent Transactions
+                  </p>
+                  <button
+                    onClick={() => router.push('/e-statement')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#9a5c97',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }}
+                  >
+                    View all →
+                  </button>
+                </div>
 
-        .content-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .page-title {
-          font-size: 28px;
-          font-weight: 700;
-          color: black;
-        }
-
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        .avatar {
-          width: 45px;
-          height: 45px;
-          border-radius: 50%;
-          object-fit: cover;
-        }
-
-        .top-section {
-          margin-top: 1rem;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1.5rem;
-        }
-
-        .welcome-card {
-          width: 640px;
-          max-width: 100%;
-          height: 230px;
-          background: #e7e1e8;
-          border-radius: 18px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          position: relative;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-
-        .welcome-title {
-          font-size: 18px;
-          padding: 0.75rem 1rem 0;
-          color: black;
-        }
-
-        .balance-card {
-          position: absolute;
-          left: 5rem;
-          top: 60px;
-          width: 380px;
-          max-width: calc(100% - 2rem);
-          height: 120px;
-          background: black;
-          border-radius: 14px;
-          color: white;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          padding: 0 1rem;
-        }
-
-        .balance-label {
-          font-size: 21px;
-        }
-
-        .balance-amount {
-          color: #a7d93a;
-          font-size: 20px;
-          margin-top: 0.25rem;
-        }
-
-        .balance-chevron {
-          position: absolute;
-          right: 1rem;
-        }
-
-        .carousel-dots {
-          position: absolute;
-          bottom: 1.25rem;
-          left: 160px;
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .dot {
-          width: 6px;
-          height: 3px;
-          background: #9ca3af;
-          border-radius: 2px;
-        }
-        .dot.active {
-          width: 50px;
-          background: #6060d5;
-        }
-
-        .welcome-image {
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          height: 250px;
-          object-fit: cover;
-        }
-
-        .payees-card {
-          width: 270px;
-          height: 230px;
-          background: white;
-          border-radius: 18px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          padding: 1rem;
-          color: black;
-          flex: 1;
-          min-width: 200px;
-        }
-
-        .payees-title {
-          font-weight: 600;
-          text-align: center;
-          font-size: 1rem;
-        }
-
-        .payees-list {
-          margin-top: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-
-        .payee-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .payee-info {
-          font-size: 13px;
-          line-height: 1.3;
-        }
-        .payee-info p:first-child {
-          font-weight: 500;
-        }
-        .payee-info p:last-child {
-          color: #4b5563;
-        }
-
-        .view-all {
-          text-align: right;
-          margin-top: 1rem;
-          font-size: 13px;
-          display: flex;
-          justify-content: flex-end;
-          align-items: center;
-          gap: 0.25rem;
-          cursor: pointer;
-        }
-
-        .transactions-section {
-          margin-top: 0.75rem;
-          color: black;
-        }
-
-        .transactions-title {
-          font-size: 18px;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-        }
-
-        .transactions-card {
-          background: white;
-          border-radius: 22px;
-          box-shadow: 18px 18px 12px rgba(0, 0, 0, 0.15);
-          padding: 1.25rem;
-          width: 1000px;
-          height: 200px;
-          max-width: 100%;
-          overflow-x: auto;
-        }
-
-        .transaction-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1rem;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-        }
-
-        .transaction-date,
-        .transaction-account,
-        .transaction-amount {
-          font-size: 0.95rem;
-        }
-
-        .transaction-status {
-          background: #d5f1cb;
-          padding: 0.25rem 1.5rem;
-          border-radius: 4px;
-          color: black;
-          font-size: 0.9rem;
-          white-space: nowrap;
-        }
-
-        @media (max-width: 1024px) {
-          .welcome-card {
-            width: 100%;
-          }
-          .transactions-card {
-            width: 100%;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .dashboard {
-            flex-direction: column;
-            gap: 0;
-          }
-
-          .content {
-            padding: 1rem;
-          }
-
-          .page-title {
-            font-size: 22px;
-          }
-
-          .top-section {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .welcome-card {
-            height: 220px;
-          }
-          .balance-card {
-            width: calc(100% - 2rem);
-            left: 1rem;
-            top: 50px;
-            height: 100px;
-          }
-          .balance-label {
-            font-size: 18px;
-          }
-          .balance-amount {
-            font-size: 18px;
-          }
-          .welcome-image {
-            height: 160px;
-          }
-          .carousel-dots {
-            left: 1.5rem;
-            bottom: 0.75rem;
-          }
-
-          .payees-card {
-            width: 100%;
-            height: auto;
-            min-height: 200px;
-          }
-
-          .transactions-card {
-            padding: 1rem;
-          }
-
-          .transaction-item {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 0.75rem;
-          }
-          .transaction-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-          }
-          .transaction-status {
-            padding: 0.15rem 1rem;
-            font-size: 0.8rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .header-actions {
-            gap: 0.75rem;
-          }
-          .avatar {
-            width: 35px;
-            height: 35px;
-          }
-          .page-title {
-            font-size: 20px;
-          }
-          .balance-label {
-            font-size: 16px;
-          }
-          .balance-amount {
-            font-size: 16px;
-          }
-          .welcome-card {
-            height: 200px;
-          }
-          .welcome-image {
-            height: 130px;
-          }
-          .transaction-date,
-          .transaction-account,
-          .transaction-amount {
-            font-size: 0.8rem;
-          }
-        }
-      `}</style>
-    </main>
+                {transactions.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '2rem 0',
+                      color: '#bbb',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }}>💳</p>
+                    No transactions yet. Make a transfer to get started.
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      minWidth: 0
+                    }}
+                  >
+                    {transactions.map((t, i) => {
+                      const isDebit =
+                        t.from_account === selectedAccount?.account_number
+                      const date = new Date(t.created_at).toLocaleDateString(
+                        'en-US',
+                        { month: 'short', day: 'numeric' }
+                      )
+                      const counterparty = isDebit
+                        ? t.to_account
+                        : t.from_account
+                      const isBill = t.to_account === 'BILLER_SYSTEM'
+                      const displayParty = isBill
+                        ? t.description
+                            ?.split('—')[0]
+                            ?.replace('BILL PAY:', '')
+                            .trim() || 'Bill Payment'
+                        : counterparty
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.6rem 0.75rem',
+                            borderRadius: 12,
+                            background: '#faf8fc',
+                            minWidth: 0
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 12,
+                              background: isDebit ? '#fee2e2' : '#dcfce7',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              flexShrink: 0
+                            }}
+                          >
+                            {isBill ? '🏢' : isDebit ? '↑' : '↓'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                fontWeight: 700,
+                                color: '#1d0730',
+                                fontSize: '0.85rem',
+                                margin: '0 0 0.1rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {displayParty}
+                            </p>
+                            <p
+                              style={{
+                                color: '#aaa',
+                                fontSize: '0.75rem',
+                                margin: 0
+                              }}
+                            >
+                              {date} · {t.status || 'Success'}
+                            </p>
+                          </div>
+                          <p
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.9rem',
+                              color: isDebit ? '#dc2626' : '#16a34a',
+                              margin: 0,
+                              flexShrink: 0
+                            }}
+                          >
+                            {isDebit ? '-' : '+'}Rs.
+                            {Number(t.amount).toLocaleString()}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    </RouteGuard>
   )
 }

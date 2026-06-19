@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSession } from '@/lib/auth'
+import { getSession, useHydrated } from '@/lib/auth'
 
 export default function AdminGuard({
   children
@@ -10,20 +10,19 @@ export default function AdminGuard({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const [authorized, setAuthorized] = useState(false)
+  const isHydrated = useHydrated()
+  const session = typeof window !== 'undefined' ? getSession() : null
 
   useEffect(() => {
-    const session = getSession()
+    if (!isHydrated) return
     if (!session) {
       router.replace('/login')
     } else if (session.role !== 'admin') {
       router.replace('/dashboard')
-    } else {
-      setAuthorized(true)
     }
-  }, [router])
+  }, [isHydrated, session, router])
 
-  if (!authorized) {
+  if (!isHydrated) {
     return (
       <div
         style={{
@@ -40,6 +39,8 @@ export default function AdminGuard({
       </div>
     )
   }
+
+  if (!session || session.role !== 'admin') return null
 
   return <>{children}</>
 }

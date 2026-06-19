@@ -102,6 +102,29 @@ export async function POST(request: Request) {
     try {
       await client.query('BEGIN')
 
+      // Lock both accounts and verify the recipient (to_account) has enough to be debited back
+      const balCheck = await client.query(
+        'SELECT account_number, balance FROM accounts WHERE account_number = ANY($1) FOR UPDATE',
+        [[tx.from_account, tx.to_account]]
+      )
+      const recipientRow = balCheck.rows.find(
+        (r: any) => r.account_number === tx.to_account
+      )
+      if (
+        !recipientRow ||
+        parseFloat(recipientRow.balance) < parseFloat(tx.amount)
+      ) {
+        await client.query('ROLLBACK')
+        return Response.json(
+          {
+            ok: false,
+            message:
+              'Reversal blocked: recipient account has insufficient funds to be debited back.'
+          },
+          { status: 400 }
+        )
+      }
+
       // Move money back: credit the original debited account, debit the credited account
       await client.query(
         'UPDATE accounts SET balance = balance + $1 WHERE account_number = $2',

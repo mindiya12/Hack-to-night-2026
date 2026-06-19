@@ -1,5 +1,14 @@
+import { getSessionUserId } from '@/lib/session'
+
 export async function POST(request: Request) {
   try {
+    const userId = getSessionUserId(request)
+    if (!userId)
+      return Response.json(
+        { ok: false, message: 'Unauthorized' },
+        { status: 401 }
+      )
+
     const { amount, toAccount, reasons, firstTime } = await request.json()
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {

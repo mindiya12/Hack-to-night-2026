@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL DEFAULT 'customer',
   full_name TEXT NOT NULL,
   nic TEXT,
-  email TEXT,
+  email TEXT UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS accounts (
   account_number TEXT UNIQUE NOT NULL,
   account_name TEXT NOT NULL,
   balance NUMERIC(14, 2) NOT NULL DEFAULT 0,
-  pin TEXT NOT NULL DEFAULT '0000'
+  account_type TEXT NOT NULL DEFAULT 'savings',
+  is_frozen BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -40,6 +42,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount NUMERIC(14, 2) NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'SUCCESS',
+  flagged BOOLEAN NOT NULL DEFAULT false,
+  flag_reason TEXT,
+  risk_score INTEGER,
   created_by INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -69,25 +74,25 @@ CREATE TABLE IF NOT EXISTS account_applications (
   reviewed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-`
 
-const seedTransactions = `
-INSERT INTO transactions (from_account, to_account, amount, description, created_by) VALUES
-  ('1000003423', '2000006754', 4500.00, 'Lunch money', 1),
-  ('1000004876', '9999999999', 10000.00, 'Totally normal fee', 1),
-  ('2000006754', '1000003423', 9870.00, 'Refund maybe', 2)
-ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS otps (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  code TEXT NOT NULL,
+  purpose TEXT NOT NULL DEFAULT 'transfer',
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `
 
 export async function runStatement(sql: string) {
   await ensureDatabase()
-  console.log('[bank-sql]', sql)
   return pool.query(sql)
 }
 
 export async function query(sql: string, params: unknown[] = []) {
   await ensureDatabase()
-  console.log('[bank-sql-param]', sql, params)
   return pool.query(sql, params)
 }
 
@@ -95,67 +100,37 @@ export async function ensureDatabase() {
   if (booted) return
   await pool.query(schema)
 
-  // Idempotent column additions (safe to run on existing tables)
-  await pool.query(
-    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'savings'`
-  )
-  await pool.query(
-    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN NOT NULL DEFAULT false`
-  )
-  await pool.query(
-    `ALTER TABLE accounts ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
-  )
-  await pool.query(
-    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS flagged BOOLEAN NOT NULL DEFAULT false`
-  )
-  await pool.query(
-    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS flag_reason TEXT`
-  )
-  await pool.query(
-    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS risk_score INTEGER`
-  )
-
-  // Seed users with hashed passwords
-  const password123Hash = bcrypt.hashSync('password123', 10)
-  const kasunHash = bcrypt.hashSync('kasun', 10)
-  const adminHash = bcrypt.hashSync('admin', 10)
+  // Seed admin account from env (idempotent)
+  const adminUsername = process.env.ADMIN_USERNAME || 'admin'
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@novabank.lk'
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@2026#'
+  const adminFullName = process.env.ADMIN_FULL_NAME || 'Platform Administrator'
+  const adminHash = bcrypt.hashSync(adminPassword, 10)
 
   await pool.query(
-    `
-    INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
-      (1, 'dilara', $1, 'customer', 'Dilara Perera', '200112345678', 'dilara@example.test'),
-      (2, 'kasun', $2, 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
-      (3, 'admin', $3, 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
-    ON CONFLICT (id) DO NOTHING;
-  `,
-    [password123Hash, kasunHash, adminHash]
+    `INSERT INTO users (username, password, role, full_name, email)
+     VALUES ($1, $2, 'admin', $3, $4)
+     ON CONFLICT (username) DO NOTHING`,
+    [adminUsername, adminHash, adminFullName, adminEmail]
   )
 
-  // Seed accounts with hashed PINs
-  const pin1234Hash = bcrypt.hashSync('1234', 10)
-  const pin0000Hash = bcrypt.hashSync('0000', 10)
-  const pin9999Hash = bcrypt.hashSync('9999', 10)
-
+  // Remove legacy demo accounts if present from old seeds
   await pool.query(
-    `
-    INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES
-      (1, '1000003423', 'Dilara Savings', 100000.00, $1),
-      (1, '1000004876', 'Dilara Expenses', 42000.00, $1),
-      (2, '2000006754', 'Kasun Current', 9870.00, $2),
-      (3, '9999999999', 'Admin Vault', 9999999.99, $3)
-    ON CONFLICT (account_number) DO NOTHING;
-  `,
-    [pin1234Hash, pin0000Hash, pin9999Hash]
+    `DELETE FROM transactions WHERE created_by IN (
+       SELECT id FROM users WHERE username IN ('dilara', 'kasun')
+     )`
   )
-
-  await pool.query(seedTransactions)
-
-  // Seed a demo application so the admin panel has something to show
-  await pool.query(`
-    INSERT INTO account_applications (user_id, requested_type, status)
-    VALUES (2, 'current', 'pending')
-    ON CONFLICT DO NOTHING
-  `)
+  await pool.query(
+    `DELETE FROM account_applications WHERE user_id IN (
+       SELECT id FROM users WHERE username IN ('dilara', 'kasun')
+     )`
+  )
+  await pool.query(
+    `DELETE FROM accounts WHERE user_id IN (
+       SELECT id FROM users WHERE username IN ('dilara', 'kasun')
+     )`
+  )
+  await pool.query(`DELETE FROM users WHERE username IN ('dilara', 'kasun')`)
 
   booted = true
 }
@@ -180,7 +155,6 @@ export function serviceFailure(reason: unknown) {
       code: issue.code,
       detail: issue.detail,
       trace: process.env.NODE_ENV === 'development' ? issue.stack : undefined
-      // databaseUrl removed for security
     },
     { status: 500 }
   )

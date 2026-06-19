@@ -1,6 +1,5 @@
 import { asText, query, serviceFailure } from '@/lib/platform-db'
 import { getSessionUserId, getSessionUserRole } from '@/lib/session'
-import bcrypt from 'bcryptjs'
 
 function requireAdmin(request: Request) {
   return getSessionUserRole(request) === 'admin'
@@ -88,8 +87,6 @@ export async function POST(request: Request) {
     const accountNumber = (
       1000000000n + BigInt(Math.floor(Math.random() * 9000000000))
     ).toString()
-    const defaultPin = bcrypt.hashSync('0000', 10)
-
     // Fetch user's name for account_name
     const userRes = await query('SELECT full_name FROM users WHERE id = $1', [
       app.user_id
@@ -97,9 +94,9 @@ export async function POST(request: Request) {
     const accountName = `${userRes.rows[0].full_name} ${accountType.charAt(0).toUpperCase() + accountType.slice(1)}`
 
     await query(
-      `INSERT INTO accounts (user_id, account_number, account_name, account_type, balance, pin)
-       VALUES ($1, $2, $3, $4, 0, $5)`,
-      [app.user_id, accountNumber, accountName, accountType, defaultPin]
+      `INSERT INTO accounts (user_id, account_number, account_name, account_type, balance)
+       VALUES ($1, $2, $3, $4, 0)`,
+      [app.user_id, accountNumber, accountName, accountType]
     )
 
     await query(

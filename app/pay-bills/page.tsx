@@ -2,20 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Sidebar from '../../components/sidebar'
-import {
-  CheckCircle2,
-  AlertTriangle,
-  ChevronLeft
-} from '../../components/Icons'
-import { ScamShieldModal } from '@/components/ScamShieldModal'
+import Sidebar from '@/components/sidebar'
 import RouteGuard from '@/components/RouteGuard'
 
-type Biller = {
-  id: string
-  name: string
-  logo: string
-}
+type Screen = 'select' | 'form' | 'otp' | 'success' | 'failed'
+
+type Biller = { id: string; name: string; logo: string }
 
 const billers: Biller[] = [
   { id: 'water', name: 'Water Board', logo: '/billers/water-board.png' },
@@ -26,19 +18,56 @@ const billers: Biller[] = [
   { id: 'slt', name: 'Sri Lanka Telecom', logo: '/billers/electricity.png' },
   { id: 'peotv', name: 'PEO TV', logo: '/billers/mpesa.png' },
   { id: 'hutch', name: 'Hutch', logo: '/billers/hutch.png' },
-  { id: 'aia', name: 'AIA', logo: '/billers/aia.png' },
-  { id: 'lolc', name: 'LOLC', logo: '/billers/lolc.png' },
+  { id: 'aia', name: 'AIA Insurance', logo: '/billers/aia.png' },
+  { id: 'lolc', name: 'LOLC Finance', logo: '/billers/lolc.png' },
   { id: 'insurance2', name: 'Insurance', logo: '/billers/insurance2.png' },
   { id: 'hsbc', name: 'HSBC', logo: '/billers/hsbc.png' }
 ]
 
-type Screen = 'select' | 'form' | 'confirm' | 'success' | 'failed'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '0.75rem 1rem',
+  borderRadius: 12,
+  border: '1.5px solid #e8e0e8',
+  fontSize: '0.95rem',
+  outline: 'none',
+  background: 'white',
+  color: '#1d0730',
+  boxSizing: 'border-box'
+}
 
-type FormErrors = {
-  fromAccount?: string
-  accountNumber?: string
-  billId?: string
-  dueAmount?: string
+function Field({
+  label,
+  error,
+  children
+}: {
+  label: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      <label
+        style={{
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          color: '#555',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}
+      >
+        {label}
+      </label>
+      {children}
+      {error && (
+        <span
+          style={{ color: '#dc2626', fontSize: '0.78rem', fontWeight: 600 }}
+        >
+          {error}
+        </span>
+      )}
+    </div>
+  )
 }
 
 export default function PayBillsPage() {
@@ -50,118 +79,114 @@ export default function PayBillsPage() {
   const [billId, setBillId] = useState('')
   const [dueAmount, setDueAmount] = useState('')
   const [remarks, setRemarks] = useState('')
-  const [pin, setPin] = useState('')
+  const [otp, setOtp] = useState('')
+  const [maskedEmail, setMaskedEmail] = useState('')
   const [confirmationNumber, setConfirmationNumber] = useState('')
   const [failReason, setFailReason] = useState('')
-  const [errors, setErrors] = useState<FormErrors>({})
-
-  const [riskResult, setRiskResult] = useState<any>(null)
-  const [showScamModal, setShowScamModal] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/accounts')
       .then((r) => r.json())
-      .then((data) => {
-        if (data.ok && data.accounts) {
-          setAccounts(data.accounts)
-          if (data.accounts.length > 0)
-            setFromAccount(data.accounts[0].account_number)
+      .then((d) => {
+        if (d.ok && d.accounts?.length) {
+          setAccounts(d.accounts)
+          setFromAccount(d.accounts[0].account_number)
         }
       })
   }, [])
 
-  function handleSelectBiller(biller: Biller) {
-    setSelectedBiller(biller)
-    setErrors({})
-    setScreen('form')
+  const selectedAccount = accounts.find((a) => a.account_number === fromAccount)
+
+  function validateForm() {
+    const e: Record<string, string> = {}
+    if (!fromAccount) e.fromAccount = 'Select a source account'
+    if (!accountNumber.trim()) e.accountNumber = 'Account number is required'
+    if (!billId.trim()) e.billId = 'Bill ID is required'
+    if (!dueAmount || isNaN(Number(dueAmount)) || Number(dueAmount) <= 0)
+      e.dueAmount = 'Enter a valid amount'
+    setErrors(e)
+    return Object.keys(e).length === 0
   }
 
-  function validateForm(): boolean {
-    const newErrors: FormErrors = {}
-
-    if (!fromAccount) newErrors.fromAccount = 'Select a source account'
-    if (!accountNumber.trim())
-      newErrors.accountNumber = 'Account number is required'
-    if (!billId.trim()) newErrors.billId = 'Bill ID is required'
-    if (
-      !dueAmount.trim() ||
-      isNaN(Number(dueAmount)) ||
-      Number(dueAmount) <= 0
-    ) {
-      newErrors.dueAmount = 'Enter a valid amount greater than 0'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  async function handleNextStep() {
+  async function handleNext() {
     if (!validateForm()) return
     setIsProcessing(true)
-
-    // Risk Check for Billers too!
+    setError('')
     try {
-      // In a real system, biller accounts are pre-verified. We use Admin Vault as mock biller destination.
-      const toAccount = '9999999999'
-
-      const res = await fetch('/api/risk-check', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fromAccount,
-          toAccount,
-          amount: dueAmount
-        })
+        body: JSON.stringify({ purpose: 'payment' })
       })
-      const risk = await res.json()
-
-      if (risk.ok && risk.level !== 'LOW') {
-        setRiskResult(risk)
-        setShowScamModal(true)
-      } else {
-        setScreen('confirm')
-      }
+      const d = await res.json()
+      if (d.ok) {
+        setMaskedEmail(d.maskedEmail)
+        setOtp('')
+        setScreen('otp')
+      } else setError(d.message || 'Failed to send OTP')
     } catch {
-      setScreen('confirm')
+      setError('Network error. Try again.')
     } finally {
       setIsProcessing(false)
     }
   }
 
-  async function handlePayNow() {
-    if (!pin) {
-      setFailReason('PIN is required')
-      setScreen('failed')
+  async function handlePay(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (otp.length < 6) {
+      setError('Enter the 6-digit OTP')
       return
     }
-
     setIsProcessing(true)
     try {
-      const res = await fetch('/api/transfer', {
+      const description = `BILL PAY: ${selectedBiller?.name} — Acct ${accountNumber} — Bill ${billId}${remarks ? ' — ' + remarks : ''}`
+      const res = await fetch('/api/pay-bill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromAccount,
-          toAccount: '9999999999', // Mock Biller Destination
           amount: dueAmount,
-          description: `BILL PAY: ${selectedBiller?.name} - ${billId} ${remarks}`,
-          pin
+          description,
+          otp
         })
       })
-      const data = await res.json()
-      if (data.ok) {
-        setConfirmationNumber(data.transaction.id.toString())
+      const d = await res.json()
+      if (d.ok) {
+        setConfirmationNumber(d.transaction.id.toString())
         setScreen('success')
       } else {
-        setFailReason(data.message || 'Payment failed')
+        setFailReason(d.message || 'Payment failed')
         setScreen('failed')
       }
     } catch {
-      setFailReason('Network error')
+      setFailReason('Network error. Try again.')
       setScreen('failed')
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  async function resendOtp() {
+    setSendingOtp(true)
+    setError('')
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purpose: 'payment' })
+      })
+      const d = await res.json()
+      if (d.ok) setMaskedEmail(d.maskedEmail)
+      else setError(d.message || 'Failed to resend')
+    } catch {
+      setError('Network error.')
+    } finally {
+      setSendingOtp(false)
     }
   }
 
@@ -172,483 +197,629 @@ export default function PayBillsPage() {
     setBillId('')
     setDueAmount('')
     setRemarks('')
-    setPin('')
+    setOtp('')
     setErrors({})
+    setError('')
   }
 
   return (
     <RouteGuard>
-      <div className="page">
+      <div
+        style={{ display: 'flex', minHeight: '100vh', background: '#f5f0f7' }}
+      >
         <Sidebar />
+        <main
+          style={{ flex: 1, padding: '2rem', overflowY: 'auto', minWidth: 0 }}
+        >
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: '#1d0730',
+              marginBottom: '1.5rem'
+            }}
+          >
+            Pay Bills
+          </h1>
 
-        <div className="content">
-          <header className="topbar">
-            <h1>Pay Bills</h1>
-            <div className="topbar-icons">
-              <div className="avatar">
-                <Image
-                  src="/avatar.png"
-                  alt="Profile"
-                  width={36}
-                  height={36}
-                  style={{ objectFit: 'cover', borderRadius: '50%' }}
-                />
-              </div>
-            </div>
-          </header>
-
-          <main className="main">
-            <div className="card-wrapper">
-              {screen === 'select' && (
-                <div className="card">
-                  <div className="biller-grid">
-                    {billers.map((biller) => (
-                      <button
-                        key={biller.id}
-                        onClick={() => handleSelectBiller(biller)}
-                        className="biller-btn"
+          <div style={{ maxWidth: 600, margin: '0 auto' }}>
+            {/* Biller Selection */}
+            {screen === 'select' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '1.5rem',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <p
+                  style={{
+                    color: '#888',
+                    fontSize: '0.875rem',
+                    marginBottom: '1.25rem',
+                    marginTop: 0
+                  }}
+                >
+                  Select a biller to get started
+                </p>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '0.75rem'
+                  }}
+                >
+                  {billers.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        setSelectedBiller(b)
+                        setScreen('form')
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.85rem 0.5rem',
+                        borderRadius: 16,
+                        border: '1.5px solid #f0e8f0',
+                        background: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.borderColor = '#9a5c97'
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = '#faf0fa'
+                      }}
+                      onMouseOut={(e) => {
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.borderColor = '#f0e8f0'
+                        ;(
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = 'white'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 12,
+                          background: '#f9f0f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden'
+                        }}
                       >
-                        <div className="biller-icon logo-circle">
-                          <Image
-                            src={biller.logo}
-                            alt={biller.name}
-                            width={44}
-                            height={44}
-                            style={{ objectFit: 'contain' }}
-                          />
-                        </div>
-                        <span className="biller-name">{biller.name}</span>
-                      </button>
-                    ))}
+                        <Image
+                          src={b.logo}
+                          alt={b.name}
+                          width={36}
+                          height={36}
+                          style={{ objectFit: 'contain' }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          color: '#1d0730',
+                          textAlign: 'center',
+                          lineHeight: 1.3
+                        }}
+                      >
+                        {b.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bill Form */}
+            {screen === 'form' && selectedBiller && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '2rem',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <button
+                  onClick={() => setScreen('select')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#888',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    padding: 0,
+                    marginBottom: '1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  ← Back to billers
+                </button>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '1.5rem'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      background: '#f9f0f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Image
+                      src={selectedBiller.logo}
+                      alt={selectedBiller.name}
+                      width={36}
+                      height={36}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <div>
+                    <p
+                      style={{
+                        fontWeight: 800,
+                        color: '#1d0730',
+                        fontSize: '1.05rem',
+                        margin: 0
+                      }}
+                    >
+                      {selectedBiller.name}
+                    </p>
+                    <p
+                      style={{
+                        color: '#9a5c97',
+                        fontSize: '0.8rem',
+                        margin: 0
+                      }}
+                    >
+                      Bill Payment
+                    </p>
                   </div>
                 </div>
-              )}
 
-              {screen === 'form' && selectedBiller && (
-                <div className="card">
-                  <button
-                    className="back-btn"
-                    onClick={() => setScreen('select')}
-                  >
-                    <ChevronLeft size={16} /> Back to billers
-                  </button>
-
-                  <div className="biller-header">
-                    <div className="biller-icon small logo-circle">
-                      <Image
-                        src={selectedBiller.logo}
-                        alt={selectedBiller.name}
-                        width={28}
-                        height={28}
-                        style={{ objectFit: 'contain' }}
-                      />
-                    </div>
-                    <span className="biller-header-name">
-                      {selectedBiller.name}
-                    </span>
-                  </div>
-
-                  <div className="field">
-                    <label>Pay From Account</label>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}
+                >
+                  <Field label="Pay From Account" error={errors.fromAccount}>
                     <select
                       value={fromAccount}
                       onChange={(e) => setFromAccount(e.target.value)}
-                      className={
-                        errors.fromAccount ? 'input-error bg-white' : 'bg-white'
-                      }
-                      style={{
-                        padding: '0.85rem 1.1rem',
-                        borderRadius: '12px',
-                        border: '1.5px solid transparent'
-                      }}
+                      style={{ ...inputStyle, background: 'white' }}
                     >
+                      <option value="">Select account</option>
                       {accounts.map((a) => (
                         <option key={a.account_number} value={a.account_number}>
-                          {a.account_name} - {a.account_number} (Rs.{' '}
+                          {a.account_name} — {a.account_number} (Rs.{' '}
                           {Number(a.balance).toLocaleString()})
                         </option>
                       ))}
                     </select>
-                    {errors.fromAccount && (
-                      <span className="error-text">{errors.fromAccount}</span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="field">
-                    <label>Account number</label>
+                  <Field label="Account Number" error={errors.accountNumber}>
                     <input
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="Enter account number"
-                      className={errors.accountNumber ? 'input-error' : ''}
+                      placeholder="Customer account number"
+                      style={inputStyle}
                     />
-                    {errors.accountNumber && (
-                      <span className="error-text">{errors.accountNumber}</span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="field">
-                    <label>Bill ID</label>
+                  <Field label="Bill ID / Reference" error={errors.billId}>
                     <input
                       value={billId}
                       onChange={(e) => setBillId(e.target.value)}
-                      placeholder="Enter bill ID"
-                      className={errors.billId ? 'input-error' : ''}
+                      placeholder="Bill reference number"
+                      style={inputStyle}
                     />
-                    {errors.billId && (
-                      <span className="error-text">{errors.billId}</span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="field">
-                    <label>Amount (Rs.)</label>
+                  <Field label="Amount (Rs.)" error={errors.dueAmount}>
                     <input
                       type="number"
+                      min="0.01"
+                      step="0.01"
                       value={dueAmount}
                       onChange={(e) => setDueAmount(e.target.value)}
                       placeholder="0.00"
-                      className={errors.dueAmount ? 'input-error' : ''}
+                      style={inputStyle}
                     />
-                    {errors.dueAmount && (
-                      <span className="error-text">{errors.dueAmount}</span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="field">
-                    <label>Remarks</label>
+                  <Field label="Remarks (optional)">
                     <input
                       value={remarks}
                       onChange={(e) => setRemarks(e.target.value)}
-                      placeholder="Optional"
+                      placeholder="Optional note"
+                      style={inputStyle}
                     />
-                  </div>
-
-                  <button
-                    className="pay-now-btn"
-                    disabled={isProcessing}
-                    onClick={handleNextStep}
-                  >
-                    {isProcessing ? 'CHECKING...' : 'CONTINUE'}
-                  </button>
+                  </Field>
                 </div>
-              )}
 
-              {screen === 'confirm' && (
-                <div className="card status-card">
-                  <h2>Confirm Payment</h2>
-                  <p className="status-sub mb-4">
-                    Pay{' '}
-                    <strong>Rs. {Number(dueAmount).toLocaleString()}</strong> to{' '}
-                    <strong>{selectedBiller?.name}</strong>
+                {error && (
+                  <p
+                    style={{
+                      color: '#dc2626',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      marginTop: '0.75rem'
+                    }}
+                  >
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  onClick={handleNext}
+                  disabled={isProcessing}
+                  style={{
+                    marginTop: '1.5rem',
+                    width: '100%',
+                    padding: '0.85rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#450043',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    opacity: isProcessing ? 0.7 : 1
+                  }}
+                >
+                  {isProcessing ? 'Sending OTP…' : 'Continue →'}
+                </button>
+              </div>
+            )}
+
+            {/* OTP Screen */}
+            {screen === 'otp' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '2rem',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                {/* Payment Summary */}
+                <div
+                  style={{
+                    background: '#f9f0f9',
+                    borderRadius: 16,
+                    padding: '1.25rem',
+                    marginBottom: '1.5rem'
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: '0 0 0.75rem',
+                      fontWeight: 700,
+                      color: '#1d0730',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Payment Summary
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {[
+                      ['Biller', selectedBiller?.name || ''],
+                      [
+                        'From',
+                        `${selectedAccount?.account_name || fromAccount} (${fromAccount})`
+                      ],
+                      ['Amount', `Rs. ${Number(dueAmount).toLocaleString()}`],
+                      ['Bill ID', billId],
+                      ...(remarks ? [['Remarks', remarks]] : [])
+                    ].map(([k, v]) => (
+                      <div
+                        key={k}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <span style={{ color: '#888', flexShrink: 0 }}>
+                          {k}
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: '#1d0730',
+                            textAlign: 'right',
+                            marginLeft: '1rem',
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {v}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* OTP Input */}
+                <div style={{ textAlign: 'center' }}>
+                  <p
+                    style={{
+                      color: '#555',
+                      fontSize: '0.9rem',
+                      marginBottom: '0.25rem'
+                    }}
+                  >
+                    Enter the 6-digit OTP sent to
+                  </p>
+                  <p
+                    style={{
+                      color: '#450043',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      marginBottom: '1.25rem'
+                    }}
+                  >
+                    {maskedEmail}
                   </p>
 
-                  <div className="mb-6 w-full text-left">
-                    <label className="block text-gray-700 mb-2 font-semibold">
-                      Enter 4-digit PIN to confirm:
-                    </label>
+                  <form onSubmit={handlePay}>
                     <input
-                      type="password"
-                      maxLength={4}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      className="w-full text-center text-2xl tracking-[1em] h-14 bg-gray-100 rounded-xl border border-gray-300 outline-none focus:border-purple-500"
-                      placeholder="****"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, ''))
+                      }
+                      placeholder="000000"
+                      style={{
+                        ...inputStyle,
+                        textAlign: 'center',
+                        fontSize: '2rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.5rem',
+                        padding: '0.75rem',
+                        color: '#450043'
+                      }}
                     />
-                  </div>
 
-                  <button
-                    className="pay-now-btn"
-                    disabled={isProcessing}
-                    onClick={handlePayNow}
+                    {error && (
+                      <p
+                        style={{
+                          color: '#dc2626',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          marginTop: '0.75rem'
+                        }}
+                      >
+                        {error}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isProcessing || otp.length < 6}
+                      style={{
+                        marginTop: '1.25rem',
+                        width: '100%',
+                        padding: '0.85rem',
+                        borderRadius: 999,
+                        border: 'none',
+                        background: '#450043',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        opacity: isProcessing || otp.length < 6 ? 0.6 : 1
+                      }}
+                    >
+                      {isProcessing ? 'Processing…' : 'Confirm Payment'}
+                    </button>
+                  </form>
+
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '1rem'
+                    }}
                   >
-                    {isProcessing ? 'PROCESSING...' : 'CONFIRM & PAY NOW'}
-                  </button>
-                  <button
-                    className="back-home-btn !bg-transparent !text-gray-500 mt-4"
-                    onClick={() => setScreen('form')}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-
-              {screen === 'success' && (
-                <div className="card status-card">
-                  <div className="status-circle success">
-                    <CheckCircle2 size={64} />
+                    <button
+                      onClick={() => {
+                        setScreen('form')
+                        setOtp('')
+                        setError('')
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#888',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      onClick={resendOtp}
+                      disabled={sendingOtp}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#450043',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        opacity: sendingOtp ? 0.6 : 1
+                      }}
+                    >
+                      {sendingOtp ? 'Resending…' : 'Resend OTP'}
+                    </button>
                   </div>
-                  <h2>Payment Successful!</h2>
-                  <p className="status-sub">
-                    Confirmation number : {confirmationNumber}
-                  </p>
-                  <button className="back-home-btn" onClick={resetToHome}>
-                    <ChevronLeft size={16} /> BACK TO HOME
-                  </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {screen === 'failed' && (
-                <div className="card status-card">
-                  <div className="status-circle failed">
-                    <AlertTriangle size={64} />
-                  </div>
-                  <h2>Payment Failed!</h2>
-                  <p className="status-sub">{failReason}</p>
-                  <button className="back-home-btn" onClick={resetToHome}>
-                    <ChevronLeft size={16} /> BACK TO HOME
-                  </button>
+            {/* Success */}
+            {screen === 'success' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <div
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: '#dcfce7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2.5rem',
+                    margin: '0 auto 1.25rem'
+                  }}
+                >
+                  ✓
                 </div>
-              )}
+                <h2
+                  style={{
+                    fontWeight: 800,
+                    color: '#166534',
+                    margin: '0 0 0.5rem'
+                  }}
+                >
+                  Payment Successful!
+                </h2>
+                <p
+                  style={{
+                    color: '#888',
+                    fontSize: '0.875rem',
+                    margin: '0 0 1.5rem'
+                  }}
+                >
+                  Confirmation #{confirmationNumber}
+                </p>
+                <button
+                  onClick={resetToHome}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#450043',
+                    color: 'white',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Pay Another Bill
+                </button>
+              </div>
+            )}
 
-              {showScamModal && riskResult && (
-                <ScamShieldModal
-                  riskResult={riskResult}
-                  transactionCtx={{
-                    amount: dueAmount,
-                    toAccount: '9999999999',
-                    reasons: riskResult.reasons,
-                    firstTime: riskResult.firstTime
+            {/* Failed */}
+            {screen === 'failed' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <div
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: '#fee2e2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2.5rem',
+                    margin: '0 auto 1.25rem'
                   }}
-                  onProceed={() => {
-                    setShowScamModal(false)
-                    setScreen('confirm')
+                >
+                  ✕
+                </div>
+                <h2
+                  style={{
+                    fontWeight: 800,
+                    color: '#991b1b',
+                    margin: '0 0 0.5rem'
                   }}
-                  onCancel={() => {
-                    setShowScamModal(false)
-                    setScreen('form')
+                >
+                  Payment Failed
+                </h2>
+                <p
+                  style={{
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    margin: '0 0 1.5rem'
                   }}
-                />
-              )}
-            </div>
-          </main>
-        </div>
-
-        <style jsx>{`
-        .page {
-          display: flex;
-          min-height: 100vh;
-          background: #f3f4f6;
-        }
-        .content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-        .topbar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: white;
-          padding: 1.1rem 2.5rem;
-          border-bottom: 1px solid #eee;
-        }
-        .topbar h1 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #333;
-        }
-        .topbar-icons {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-          color: #666;
-        }
-        .avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .main {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          padding: 3rem;
-        }
-        .card-wrapper {
-          width: 100%;
-          max-width: 760px;
-        }
-        .card {
-          background: white;
-          border-radius: 24px;
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-          padding: 3rem;
-        }
-        .biller-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 2.5rem 2rem;
-        }
-        .biller-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.65rem;
-          background: none;
-          border: none;
-          cursor: pointer;
-        }
-        .biller-icon {
-          width: 76px;
-          height: 76px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .biller-icon.small {
-          width: 48px;
-          height: 48px;
-        }
-        .logo-circle {
-          background: white;
-          border: 1px solid #eee;
-        }
-        .biller-btn:hover .biller-icon {
-          transform: scale(1.07);
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-        }
-        .biller-name {
-          font-size: 0.82rem;
-          color: #555;
-          text-align: center;
-          line-height: 1.25;
-          font-weight: 500;
-        }
-        .back-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          background: none;
-          border: none;
-          color: #888;
-          font-size: 0.9rem;
-          cursor: pointer;
-          margin-bottom: 1.75rem;
-          padding: 0;
-        }
-        .back-btn:hover {
-          color: #555;
-        }
-        .biller-header {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-          margin-bottom: 2.25rem;
-        }
-        .biller-header-name {
-          font-weight: 600;
-          font-size: 1.05rem;
-          color: #333;
-        }
-        .field {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-          margin-bottom: 1.4rem;
-        }
-        .field label {
-          font-size: 0.9rem;
-          color: #666;
-          font-weight: 500;
-        }
-        .field input {
-          background: #f3f4f6;
-          border: 1.5px solid transparent;
-          border-radius: 12px;
-          padding: 0.85rem 1.1rem;
-          font-size: 0.95rem;
-          color: #333;
-          outline: none;
-          transition: box-shadow 0.15s, border-color 0.15s;
-        }
-        .field input:focus {
-          box-shadow: 0 0 0 2px #d8b9d6;
-        }
-        .field input.input-error {
-          border-color: #ef4444;
-          background: #fef2f2;
-        }
-        .error-text {
-          font-size: 0.78rem;
-          color: #ef4444;
-          margin-top: 0.15rem;
-        }
-        .pay-now-btn {
-          margin-top: 1.75rem;
-          width: 100%;
-          background: #9a5c97;
-          color: white;
-          font-weight: 600;
-          font-size: 1rem;
-          padding: 1rem;
-          border: none;
-          border-radius: 999px;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        .pay-now-btn:hover {
-          background: #450043;
-        }
-        .status-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          padding: 4rem 3rem;
-        }
-        .status-circle {
-          width: 112px;
-          height: 112px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 1.75rem;
-        }
-        .status-circle.success {
-          background: #dcfce7;
-          color: #22c55e;
-        }
-        .status-circle.failed {
-          background: #fee2e2;
-          color: #ef4444;
-        }
-        .status-card h2 {
-          font-size: 1.4rem;
-          font-weight: 600;
-          color: #333;
-          margin-bottom: 0.6rem;
-        }
-        .status-sub {
-          font-size: 0.9rem;
-          color: #999;
-          margin-bottom: 2.25rem;
-          white-space: pre-line;
-        }
-        .back-home-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          background: #9a5c97;
-          color: white;
-          font-weight: 600;
-          font-size: 0.9rem;
-          padding: 0.85rem 2.25rem;
-          border: none;
-          border-radius: 999px;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        .back-home-btn:hover {
-          background: #450043;
-        }
-      `}</style>
+                >
+                  {failReason}
+                </p>
+                <button
+                  onClick={resetToHome}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#dc2626',
+                    color: 'white',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </RouteGuard>
   )

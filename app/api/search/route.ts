@@ -1,21 +1,16 @@
 import { asText, query, serviceFailure } from '@/lib/platform-db'
-import { getSessionUserId } from '@/lib/session'
+import { getSessionUserRole } from '@/lib/session'
 
 export async function GET(request: Request) {
   try {
-    const userId = getSessionUserId(request)
-    if (!userId)
-      return Response.json(
-        { ok: false, message: 'Unauthorized' },
-        { status: 401 }
-      )
+    if (getSessionUserRole(request) !== 'admin') {
+      return Response.json({ ok: false, message: 'Forbidden' }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
     const q = asText(searchParams.get('q'))
-
-    // A more secure implementation could restrict searches, but for now we just fix the SQLi
-    // by using parameterized queries.
     const searchPattern = `%${q}%`
+
     const sql = `
       SELECT 'user' AS type, id::text, username AS label, email AS detail FROM users
       WHERE username ILIKE $1 OR full_name ILIKE $1

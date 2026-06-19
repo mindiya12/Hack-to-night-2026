@@ -17,15 +17,14 @@ export async function POST(request: Request) {
       )
 
     const body = await request.json().catch(() => ({}))
-    const fromAccount = asText(body.fromAccount || body.from)
-    const toAccount = asText(body.toAccount || body.to)
+    const fromAccount = asText(body.fromAccount)
     const amount = parseFloat(asText(body.amount || '0'))
     const description = asText(body.description)
     const otp = asText(body.otp)
 
-    if (!fromAccount || !toAccount || !otp) {
+    if (!fromAccount || !otp) {
       return Response.json(
-        { ok: false, message: 'Missing fields. OTP is required.' },
+        { ok: false, message: 'Missing fields' },
         { status: 400 }
       )
     }
@@ -35,17 +34,11 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    if (fromAccount === toAccount) {
-      return Response.json(
-        { ok: false, message: 'Cannot transfer to same account' },
-        { status: 400 }
-      )
-    }
 
     // Verify OTP
     const otpCheck = await query(
       `SELECT id FROM otps
-       WHERE user_id = $1 AND code = $2 AND purpose = 'transfer'
+       WHERE user_id = $1 AND code = $2 AND purpose = 'payment'
          AND used = false AND expires_at > NOW()`,
       [userId, otp]
     )
@@ -56,52 +49,30 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify ownership and frozen status of source account
-    const ownCheck = await query(
+    // Verify ownership and frozen status
+    const accCheck = await query(
       'SELECT id, balance, is_frozen FROM accounts WHERE account_number = $1 AND user_id = $2',
       [fromAccount, userId]
     )
-    if (ownCheck.rows.length === 0) {
+    if (accCheck.rows.length === 0) {
       return Response.json(
         { ok: false, message: 'Forbidden or account not found' },
         { status: 403 }
       )
     }
-    if (ownCheck.rows[0].is_frozen) {
+    if (accCheck.rows[0].is_frozen) {
       return Response.json(
         {
           ok: false,
-          message:
-            'Your account is frozen. Please contact the bank for assistance.'
+          message: 'Your account is frozen. Contact the bank for assistance.'
         },
         { status: 403 }
       )
     }
 
-    // Verify destination exists and is not frozen
-    const destCheck = await query(
-      'SELECT id, is_frozen FROM accounts WHERE account_number = $1',
-      [toAccount]
-    )
-    if (destCheck.rows.length === 0) {
-      return Response.json(
-        { ok: false, message: 'Destination account not found' },
-        { status: 404 }
-      )
-    }
-    if (destCheck.rows[0].is_frozen) {
-      return Response.json(
-        {
-          ok: false,
-          message: 'Destination account is frozen and cannot receive funds.'
-        },
-        { status: 400 }
-      )
-    }
-
     await ensureDatabase()
     const client = await pool.connect()
-    let transactionRow: any
+    let txRow: any
     try {
       await client.query('BEGIN')
 
@@ -111,15 +82,6 @@ export async function POST(request: Request) {
       )
       if (parseFloat(locked.rows[0].balance) < amount) {
         await client.query('ROLLBACK')
-        await query('INSERT INTO audit_logs (event, payload) VALUES ($1, $2)', [
-          'TRANSFER_FAILED',
-          JSON.stringify({
-            reason: 'Insufficient funds',
-            from: fromAccount,
-            amount,
-            userId
-          })
-        ])
         return Response.json(
           { ok: false, message: 'Insufficient balance' },
           { status: 400 }
@@ -130,33 +92,29 @@ export async function POST(request: Request) {
         'UPDATE accounts SET balance = balance - $1 WHERE account_number = $2',
         [amount, fromAccount]
       )
-      await client.query(
-        'UPDATE accounts SET balance = balance + $1 WHERE account_number = $2',
-        [amount, toAccount]
-      )
 
       const inserted = await client.query(
         `INSERT INTO transactions (from_account, to_account, amount, description, created_by)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [fromAccount, toAccount, amount, description, userId]
+         VALUES ($1, 'BILLER_SYSTEM', $2, $3, $4) RETURNING *`,
+        [fromAccount, amount, description, userId]
       )
-      transactionRow = inserted.rows[0]
+      txRow = inserted.rows[0]
 
       await client.query(
         'INSERT INTO audit_logs (event, payload) VALUES ($1, $2)',
         [
-          'TRANSFER_SUCCESS',
+          'BILL_PAYMENT',
           JSON.stringify({
-            transactionId: transactionRow.id,
+            transactionId: txRow.id,
             from: fromAccount,
-            to: toAccount,
             amount,
+            description,
             userId
           })
         ]
       )
 
-      // Mark OTP as used inside the same transaction
+      // Mark OTP used inside the same transaction
       await client.query('UPDATE otps SET used = true WHERE id = $1', [
         otpCheck.rows[0].id
       ])
@@ -171,8 +129,8 @@ export async function POST(request: Request) {
 
     return Response.json({
       ok: true,
-      message: 'Transfer accepted.',
-      transaction: transactionRow
+      message: 'Payment successful.',
+      transaction: txRow
     })
   } catch (reason) {
     return serviceFailure(reason)

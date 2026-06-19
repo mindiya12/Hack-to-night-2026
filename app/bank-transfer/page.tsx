@@ -2,461 +2,633 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/sidebar'
-import { ScamShieldModal } from '@/components/ScamShieldModal'
 import RouteGuard from '@/components/RouteGuard'
 
-type Errors = Partial<{
-  fromAccount: string
-  amount: string
-  accountNumber: string
-  accountName: string
-  bank: string
-}>
+type Step = 'form' | 'otp' | 'success' | 'failure'
+
+function Field({
+  label,
+  children
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+      <label
+        style={{
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          color: '#555',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '0.75rem 1rem',
+  borderRadius: 12,
+  border: '1.5px solid #e8e0e8',
+  fontSize: '0.95rem',
+  outline: 'none',
+  background: 'white',
+  color: '#1d0730',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.2s'
+}
 
 export default function BankTransfer() {
   const [accounts, setAccounts] = useState<any[]>([])
   const [fromAccount, setFromAccount] = useState('')
+  const [toAccount, setToAccount] = useState('')
   const [amount, setAmount] = useState('')
-  const [accountNumber, setAccountNumber] = useState('')
-  const [accountName, setAccountName] = useState('')
-  const [bank, setBank] = useState('')
   const [description, setDescription] = useState('')
-  const [pin, setPin] = useState('')
-
-  const [errors, setErrors] = useState<Errors>({})
-  const [transferError, setTransferError] = useState('')
-
-  const [step, setStep] = useState<'form' | 'confirm' | 'success' | 'failure'>(
-    'form'
-  )
-  const [confirmation, setConfirmation] = useState<string | null>(null)
-
-  const [riskResult, setRiskResult] = useState<any>(null)
-  const [showScamModal, setShowScamModal] = useState(false)
-  const [isRiskChecking, setIsRiskChecking] = useState(false)
+  const [step, setStep] = useState<Step>('form')
+  const [otp, setOtp] = useState('')
+  const [maskedEmail, setMaskedEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [error, setError] = useState('')
+  const [confirmationId, setConfirmationId] = useState('')
+  const [failReason, setFailReason] = useState('')
 
   useEffect(() => {
     fetch('/api/accounts')
       .then((r) => r.json())
-      .then((data) => {
-        if (data.ok && data.accounts) {
-          setAccounts(data.accounts)
-          if (data.accounts.length > 0)
-            setFromAccount(data.accounts[0].account_number)
+      .then((d) => {
+        if (d.ok && d.accounts?.length) {
+          setAccounts(d.accounts)
+          setFromAccount(d.accounts[0].account_number)
         }
       })
-      .catch(console.error)
   }, [])
 
+  const selectedAccount = accounts.find((a) => a.account_number === fromAccount)
+
   function validate() {
-    const e: Errors = {}
-    if (!fromAccount) e.fromAccount = 'Select an account'
-    if (!amount) e.amount = 'Amount is required'
-    else if (Number(amount) <= 0 || isNaN(Number(amount)))
-      e.amount = 'Enter a valid positive amount'
-
-    if (!accountNumber) e.accountNumber = 'Account number is required'
-    else if (!/^\d{6,}$/.test(accountNumber))
-      e.accountNumber = 'Enter a valid account number'
-
-    if (!accountName) e.accountName = 'Account name is required'
-    if (!bank) e.bank = 'Select a bank'
-
-    setErrors(e)
-    return Object.keys(e).length === 0
+    if (!fromAccount) {
+      setError('Select a source account')
+      return false
+    }
+    if (!toAccount || !/^\d{6,}$/.test(toAccount)) {
+      setError('Enter a valid destination account number (min 6 digits)')
+      return false
+    }
+    if (fromAccount === toAccount) {
+      setError('Source and destination accounts cannot be the same')
+      return false
+    }
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      setError('Enter a valid amount greater than 0')
+      return false
+    }
+    return true
   }
 
   async function handleNext(e: React.FormEvent) {
     e.preventDefault()
+    setError('')
     if (!validate()) return
-
-    setIsRiskChecking(true)
+    setSendingOtp(true)
     try {
-      const res = await fetch('/api/risk-check', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fromAccount,
-          toAccount: accountNumber,
-          amount
-        })
+        body: JSON.stringify({ purpose: 'transfer' })
       })
-      const risk = await res.json()
-
-      if (risk.ok && risk.level !== 'LOW') {
-        setRiskResult(risk)
-        setShowScamModal(true)
+      const d = await res.json()
+      if (d.ok) {
+        setMaskedEmail(d.maskedEmail)
+        setStep('otp')
       } else {
-        setStep('confirm')
+        setError(d.message || 'Failed to send OTP')
       }
-    } catch (err) {
-      // Fallback to confirm if risk check fails
-      setStep('confirm')
+    } catch {
+      setError('Network error. Try again.')
     } finally {
-      setIsRiskChecking(false)
+      setSendingOtp(false)
     }
   }
 
   async function handleTransfer(e: React.FormEvent) {
     e.preventDefault()
-    setTransferError('')
-
-    if (!pin) {
-      setTransferError('PIN is required to confirm transfer')
+    setError('')
+    if (!otp.trim()) {
+      setError('Enter the OTP sent to your email')
       return
     }
-
+    setLoading(true)
     try {
       const res = await fetch('/api/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromAccount,
-          toAccount: accountNumber,
+          toAccount,
           amount,
           description,
-          pin
+          otp
         })
       })
-      const data = await res.json()
-
-      if (data.ok) {
-        setConfirmation(data.transaction.id.toString())
+      const d = await res.json()
+      if (d.ok) {
+        setConfirmationId(d.transaction.id.toString())
         setStep('success')
       } else {
-        setTransferError(data.message || 'Transfer failed')
-        if (data.message === 'Insufficient balance') {
-          setStep('failure')
-        }
+        setFailReason(d.message || 'Transfer failed')
+        setStep('failure')
       }
-    } catch (err) {
-      setTransferError('Network error')
+    } catch {
+      setFailReason('Network error. Try again.')
+      setStep('failure')
+    } finally {
+      setLoading(false)
     }
   }
 
-  function resetForm() {
+  async function resendOtp() {
+    setError('')
+    setSendingOtp(true)
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purpose: 'transfer' })
+      })
+      const d = await res.json()
+      if (d.ok) setMaskedEmail(d.maskedEmail)
+      else setError(d.message || 'Failed to resend OTP')
+    } catch {
+      setError('Network error.')
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  function reset() {
+    setFromAccount(accounts[0]?.account_number || '')
+    setToAccount('')
     setAmount('')
-    setAccountNumber('')
-    setAccountName('')
-    setBank('')
     setDescription('')
-    setPin('')
-    setErrors({})
-    setTransferError('')
-    setConfirmation(null)
+    setOtp('')
+    setMaskedEmail('')
+    setError('')
+    setConfirmationId('')
+    setFailReason('')
     setStep('form')
   }
 
   return (
     <RouteGuard>
-      <div className="min-h-screen bg-bg-light font-geist p-0">
-        <div className="flex min-h-screen">
-          <Sidebar />
+      <div
+        style={{ display: 'flex', minHeight: '100vh', background: '#f5f0f7' }}
+      >
+        <Sidebar />
+        <main
+          style={{ flex: 1, padding: '2rem', overflowY: 'auto', minWidth: 0 }}
+        >
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: '#1d0730',
+              marginBottom: '1.5rem'
+            }}
+          >
+            Bank Transfer
+          </h1>
 
-          <main className="flex-1 p-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Bank Transfer</h2>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
-                  <img
-                    src="/avatar.png"
-                    alt="avatar"
-                    className="w-full h-full object-cover bg-white"
-                  />
-                </div>
-              </div>
-            </div>
+          <div style={{ maxWidth: 560, margin: '0 auto' }}>
+            {step === 'form' && (
+              <form
+                onSubmit={handleNext}
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '2rem',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <h2
+                  style={{
+                    fontWeight: 700,
+                    color: '#1d0730',
+                    margin: '0 0 1.5rem',
+                    fontSize: '1.1rem'
+                  }}
+                >
+                  Transfer Details
+                </h2>
 
-            {step === 'form' ? (
-              <form onSubmit={handleNext} className="transfer-card p-8">
-                <div className="grid grid-cols-12 gap-y-6 gap-x-8 items-center">
-                  <label className="col-span-3 text-gray-700">
-                    From Account :
-                  </label>
-                  <div className="col-span-9">
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.25rem'
+                  }}
+                >
+                  <Field label="From Account">
                     <select
                       value={fromAccount}
                       onChange={(e) => setFromAccount(e.target.value)}
-                      className="underline-input bg-transparent"
+                      style={{ ...inputStyle, background: 'white' }}
                     >
-                      <option value="">Select your account</option>
+                      <option value="">Select account</option>
                       {accounts.map((a) => (
                         <option key={a.account_number} value={a.account_number}>
-                          {a.account_name} - {a.account_number} (Rs.{' '}
+                          {a.account_name} — {a.account_number} (Rs.{' '}
                           {Number(a.balance).toLocaleString()})
                         </option>
                       ))}
                     </select>
-                    {errors.fromAccount && (
-                      <div className="text-sm text-red-600 mt-1">
-                        {errors.fromAccount}
-                      </div>
-                    )}
-                  </div>
+                  </Field>
 
-                  <label className="col-span-3 text-gray-700">Amount :</label>
-                  <div className="col-span-9">
+                  <Field label="Destination Account Number">
                     <input
-                      aria-label="amount"
+                      value={toAccount}
+                      onChange={(e) => setToAccount(e.target.value)}
+                      placeholder="Enter account number"
+                      style={inputStyle}
+                    />
+                  </Field>
+
+                  <Field label="Amount (Rs.)">
+                    <input
                       type="number"
+                      min="0.01"
+                      step="0.01"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="underline-input"
                       placeholder="0.00"
+                      style={inputStyle}
                     />
-                    {errors.amount && (
-                      <div className="text-sm text-red-600 mt-1">
-                        {errors.amount}
-                      </div>
-                    )}
-                  </div>
+                  </Field>
 
-                  <label className="col-span-3 text-gray-700">
-                    To Account :
-                  </label>
-                  <div className="col-span-9">
+                  <Field label="Description (optional)">
                     <input
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      className="underline-input"
-                    />
-                    {errors.accountNumber && (
-                      <div className="text-sm text-red-600 mt-1">
-                        {errors.accountNumber}
-                      </div>
-                    )}
-                  </div>
-
-                  <label className="col-span-3 text-gray-700">
-                    Account Name :
-                  </label>
-                  <div className="col-span-9">
-                    <input
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      className="underline-input"
-                    />
-                    {errors.accountName && (
-                      <div className="text-sm text-red-600 mt-1">
-                        {errors.accountName}
-                      </div>
-                    )}
-                  </div>
-
-                  <label className="col-span-3 text-gray-700">
-                    Select Bank :
-                  </label>
-                  <div className="col-span-9">
-                    <select
-                      value={bank}
-                      onChange={(e) => setBank(e.target.value)}
-                      className="underline-input bg-transparent"
-                    >
-                      <option value="">Choose bank</option>
-                      <option>First National</option>
-                      <option>Global Trust</option>
-                      <option>Union Bank</option>
-                      <option>Nova Bank</option>
-                    </select>
-                    {errors.bank && (
-                      <div className="text-sm text-red-600 mt-1">
-                        {errors.bank}
-                      </div>
-                    )}
-                  </div>
-
-                  <label className="col-span-3 text-gray-700">
-                    Description :
-                  </label>
-                  <div className="col-span-9">
-                    <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      rows={2}
-                      className="description-box"
+                      placeholder="What's this for?"
+                      style={inputStyle}
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div className="flex justify-center mt-10">
-                  <button
-                    type="submit"
-                    disabled={isRiskChecking}
-                    className="next-btn disabled:opacity-50"
+                {error && (
+                  <p
+                    style={{
+                      color: '#dc2626',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      marginTop: '1rem',
+                      marginBottom: 0
+                    }}
                   >
-                    {isRiskChecking ? 'CHECKING...' : 'NEXT'}
-                  </button>
-                </div>
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={sendingOtp}
+                  style={{
+                    marginTop: '1.5rem',
+                    width: '100%',
+                    padding: '0.85rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#450043',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    opacity: sendingOtp ? 0.7 : 1
+                  }}
+                >
+                  {sendingOtp ? 'Sending OTP…' : 'Continue →'}
+                </button>
               </form>
-            ) : step === 'confirm' ? (
-              <div className="transfer-card p-8">
-                <h3 className="text-center text-2xl font-semibold mb-6">
-                  Confirm Transfer
-                </h3>
-                <div className="bg-white rounded-lg p-6 shadow-lg max-w-xl mx-auto text-center">
-                  <p className="mb-4">
-                    Confirm your transfer of{' '}
-                    <strong className="text-purple-700 text-lg">
-                      Rs. {Number(amount).toLocaleString()}
-                    </strong>{' '}
-                    to <strong>{accountName || 'recipient'}</strong>
+            )}
+
+            {step === 'otp' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '2rem',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                {/* Transfer Summary */}
+                <div
+                  style={{
+                    background: '#f9f0f9',
+                    borderRadius: 16,
+                    padding: '1.25rem',
+                    marginBottom: '1.5rem'
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: '0 0 0.75rem',
+                      fontWeight: 700,
+                      color: '#1d0730',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Transfer Summary
                   </p>
-
-                  <div className="mb-6 max-w-xs mx-auto text-left">
-                    <label className="block text-gray-700 mb-2 font-semibold">
-                      Enter 4-digit PIN to confirm:
-                    </label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      className="w-full text-center text-2xl tracking-[1em] h-14 bg-gray-100 rounded-xl border border-gray-300 outline-none focus:border-purple-500"
-                      placeholder="****"
-                    />
-                  </div>
-
-                  {transferError && (
-                    <p className="text-red-500 font-semibold mb-4">
-                      {transferError}
-                    </p>
-                  )}
-
-                  <div className="flex justify-center gap-4">
-                    <button
-                      onClick={() => setStep('form')}
-                      className="next-btn"
-                      aria-label="back"
-                    >
-                      BACK
-                    </button>
-                    <button
-                      onClick={handleTransfer}
-                      className="next-btn transfer-btn"
-                    >
-                      TRANSFER
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : step === 'success' ? (
-              <div className="transfer-card p-8">
-                <div className="relative">
-                  <div className="success-check inside-check">
-                    <svg
-                      viewBox="0 0 120 120"
-                      width="100"
-                      height="100"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <defs>
-                        <radialGradient id="g" cx="50%" cy="50%">
-                          <stop offset="0%" stopColor="#28a745" />
-                          <stop offset="100%" stopColor="#138a3e" />
-                        </radialGradient>
-                      </defs>
-                      <circle cx="60" cy="60" r="50" fill="#dff7e7" />
-                      <circle cx="60" cy="60" r="40" fill="#10a654" />
-                      <path
-                        d="M38 62 L54 78 L82 42"
-                        stroke="#fff"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                  </div>
-
-                  <h3 className="text-center text-2xl font-semibold mb-4">
-                    Transfer Successful!
-                  </h3>
-                  <p className="text-center text-sm text-gray-500 mb-10">
-                    Confirmation number : {confirmation}
-                  </p>
-
-                  <div className="flex justify-center">
-                    <button
-                      onClick={resetForm}
-                      className="transfer-btn success-btn"
-                    >
-                      <span className="mr-3">‹</span> MAKE ANOTHER TRANSFER
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="transfer-card p-8">
-                <div className="relative">
-                  <div className="success-check inside-check">
-                    <svg
-                      viewBox="0 0 120 120"
-                      width="120"
-                      height="120"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle cx="60" cy="60" r="50" fill="#ffdede" />
-                      <circle cx="60" cy="60" r="40" fill="#ffb6b6" />
-                      <path
-                        d="M60 30 L93 86 L27 86 Z"
-                        fill="#ff4d4f"
-                        stroke="#fff"
-                        strokeWidth="4"
-                        strokeLinejoin="round"
-                      />
-                      <text
-                        x="60"
-                        y="78"
-                        textAnchor="middle"
-                        fontSize="36"
-                        fill="#fff"
-                        fontWeight="700"
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {[
+                      [
+                        'From',
+                        `${selectedAccount?.account_name || fromAccount} (${fromAccount})`
+                      ],
+                      ['To', toAccount],
+                      ['Amount', `Rs. ${Number(amount).toLocaleString()}`],
+                      ...(description ? [['Note', description]] : [])
+                    ].map(([k, v]) => (
+                      <div
+                        key={k}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.875rem'
+                        }}
                       >
-                        !
-                      </text>
-                    </svg>
+                        <span style={{ color: '#888' }}>{k}</span>
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: '#1d0730',
+                            textAlign: 'right',
+                            maxWidth: '60%',
+                            wordBreak: 'break-all'
+                          }}
+                        >
+                          {v}
+                        </span>
+                      </div>
+                    ))}
                   </div>
+                </div>
 
-                  <h3 className="text-center text-2xl font-semibold mb-4 text-red-600">
-                    Transaction Failed!
-                  </h3>
-                  <p className="text-center text-gray-700 font-medium mb-6">
-                    {transferError}
+                {/* OTP Input */}
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                  <p
+                    style={{
+                      color: '#555',
+                      fontSize: '0.9rem',
+                      marginBottom: '0.25rem'
+                    }}
+                  >
+                    Enter the 6-digit OTP sent to
+                  </p>
+                  <p
+                    style={{
+                      color: '#450043',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      marginBottom: '1.25rem'
+                    }}
+                  >
+                    {maskedEmail}
                   </p>
 
-                  <div className="flex justify-center">
+                  <form onSubmit={handleTransfer}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, ''))
+                      }
+                      placeholder="000000"
+                      style={{
+                        ...inputStyle,
+                        textAlign: 'center',
+                        fontSize: '2rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.5rem',
+                        padding: '0.75rem',
+                        color: '#450043'
+                      }}
+                    />
+
+                    {error && (
+                      <p
+                        style={{
+                          color: '#dc2626',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          marginTop: '0.75rem'
+                        }}
+                      >
+                        {error}
+                      </p>
+                    )}
+
                     <button
-                      onClick={resetForm}
-                      className="transfer-btn success-btn !bg-red-600"
+                      type="submit"
+                      disabled={loading || otp.length < 6}
+                      style={{
+                        marginTop: '1.25rem',
+                        width: '100%',
+                        padding: '0.85rem',
+                        borderRadius: 999,
+                        border: 'none',
+                        background: '#450043',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        opacity: loading || otp.length < 6 ? 0.6 : 1
+                      }}
                     >
-                      <span className="mr-3">‹</span> TRY AGAIN
+                      {loading ? 'Processing…' : 'Confirm Transfer'}
+                    </button>
+                  </form>
+
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '1rem'
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setStep('form')
+                        setOtp('')
+                        setError('')
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#888',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      onClick={resendOtp}
+                      disabled={sendingOtp}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#450043',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        opacity: sendingOtp ? 0.6 : 1
+                      }}
+                    >
+                      {sendingOtp ? 'Resending…' : 'Resend OTP'}
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {showScamModal && riskResult && (
-              <ScamShieldModal
-                riskResult={riskResult}
-                transactionCtx={{
-                  amount,
-                  toAccount: accountNumber,
-                  reasons: riskResult.reasons,
-                  firstTime: riskResult.firstTime
+            {step === 'success' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
                 }}
-                onProceed={() => {
-                  setShowScamModal(false)
-                  setStep('confirm')
-                }}
-                onCancel={() => {
-                  setShowScamModal(false)
-                  setStep('form')
-                }}
-              />
+              >
+                <div
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: '#dcfce7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2.5rem',
+                    margin: '0 auto 1.25rem'
+                  }}
+                >
+                  ✓
+                </div>
+                <h2
+                  style={{
+                    fontWeight: 800,
+                    color: '#166534',
+                    margin: '0 0 0.5rem'
+                  }}
+                >
+                  Transfer Successful!
+                </h2>
+                <p
+                  style={{
+                    color: '#888',
+                    fontSize: '0.875rem',
+                    margin: '0 0 1.5rem'
+                  }}
+                >
+                  Confirmation #{confirmationId}
+                </p>
+                <button
+                  onClick={reset}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#450043',
+                    color: 'white',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Make Another Transfer
+                </button>
+              </div>
             )}
-          </main>
-        </div>
+
+            {step === 'failure' && (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 16px rgba(69,0,67,0.07)'
+                }}
+              >
+                <div
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: '#fee2e2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2.5rem',
+                    margin: '0 auto 1.25rem'
+                  }}
+                >
+                  ✕
+                </div>
+                <h2
+                  style={{
+                    fontWeight: 800,
+                    color: '#991b1b',
+                    margin: '0 0 0.5rem'
+                  }}
+                >
+                  Transfer Failed
+                </h2>
+                <p
+                  style={{
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    margin: '0 0 1.5rem'
+                  }}
+                >
+                  {failReason}
+                </p>
+                <button
+                  onClick={reset}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: '#dc2626',
+                    color: 'white',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </RouteGuard>
   )

@@ -81,7 +81,7 @@ export default function EStatementPage() {
             <Sidebar />
           </div>
 
-          <main className="flex-1 p-12 text-black w-full print:p-0">
+          <main className="flex-1 p-6 md:p-12 text-black min-w-0 overflow-x-hidden print:p-0">
             <div className="mb-10 flex items-center justify-between print:hidden">
               <h2 className="text-2xl font-semibold">E-Statement</h2>
               <div className="flex items-center gap-3">

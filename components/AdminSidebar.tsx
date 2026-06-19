@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clearSession } from '@/lib/auth'
+import type { ReactElement } from 'react'
 
 type IconProps = { size?: number }
 
-const icons: Record<string, (p: IconProps) => JSX.Element> = {
+const icons: Record<string, (p: IconProps) => ReactElement> = {
   dashboard: ({ size = 18 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect
@@ -173,12 +174,6 @@ export default function AdminSidebar() {
             )
           })}
         </nav>
-
-        <div className="customer-link-row">
-          <Link href="/dashboard" className="back-link">
-            ← Back to Customer View
-          </Link>
-        </div>
       </div>
 
       <div className="sidebar-footer">
@@ -272,16 +267,6 @@ export default function AdminSidebar() {
           background: rgba(154, 92, 151, 0.2);
           color: white;
         }
-        .customer-link-row {
-          padding: 0.5rem 1rem 1rem;
-        }
-        .back-link {
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.4);
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-        .back-link:hover { color: rgba(255,255,255,0.7); }
         .sidebar-footer {
           padding: 1rem;
           border-top: 1px solid rgba(255,255,255,0.08);

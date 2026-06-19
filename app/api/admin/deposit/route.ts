@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     const accCheck = await query(
-      'SELECT balance FROM accounts WHERE account_number = $1',
+      'SELECT balance, is_frozen FROM accounts WHERE account_number = $1',
       [accountNumber]
     )
     if (accCheck.rows.length === 0) {
@@ -47,10 +47,20 @@ export async function POST(request: Request) {
       )
     }
 
-    if (
-      type === 'withdrawal' &&
-      parseFloat(accCheck.rows[0].balance) < amount
-    ) {
+    const acc = accCheck.rows[0]
+
+    if (acc.is_frozen) {
+      return Response.json(
+        {
+          ok: false,
+          message:
+            'Account is frozen. Unfreeze the account before posting transactions.'
+        },
+        { status: 403 }
+      )
+    }
+
+    if (type === 'withdrawal' && parseFloat(acc.balance) < amount) {
       return Response.json(
         { ok: false, message: 'Insufficient balance for withdrawal' },
         { status: 400 }

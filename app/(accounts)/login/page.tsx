@@ -32,7 +32,7 @@ export default function LoginPage() {
       }
 
       saveSession(data.user)
-      router.push('/dashboard')
+      router.push(data.user.role === 'admin' ? '/admin' : '/dashboard')
     } catch (err) {
       setError('Network error. Please try again.')
     } finally {
